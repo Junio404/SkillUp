@@ -1,0 +1,1 @@
+print("Estrutura Inicial do Projeto SkillUp com POETRY")
