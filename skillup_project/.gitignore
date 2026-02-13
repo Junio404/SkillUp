@@ -1,0 +1,8 @@
+/venv_skillup/
+__pycache__/
+*.pyc
+.idea/
+.vscode/
+.DS_Store
+.env
+.env.*
