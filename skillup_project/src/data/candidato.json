@@ -1,0 +1,12 @@
+[
+    {
+        "id": 1,
+        "nome": "João Atualizado",
+        "cpf": "11111111111",
+        "email": "joao@email.com",
+        "areas_interesse": [
+            "TI"
+        ],
+        "nivel_formacao": "Superior"
+    }
+]
