@@ -1,24 +1,24 @@
 import json
 import os
-from src.dominio.candidato import Candidato
-from src.interfaces.interface_candidato import ICandidatoRepositorio
 
-'''Implementação de repositório de candidatos usando arquivos JSON para persistência.
-Cada candidato é armazenado como um dicionário em uma lista dentro do arquivo JSON.'''
+from src.dominio.empresa import Empresa
+from src.interfaces.interface_empresa import IEmpresaRepositorio  # ajuste se o nome for diferente
+
+
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 CAMINHO_ARQUIVO = os.path.normpath(
-    os.path.join(BASE_DIR, "..", "data", "candidato.json")
+    os.path.join(BASE_DIR, "..", "data", "empresa.json")
 )
 
 
-class RepositorioCandidatoJSON(ICandidatoRepositorio):
-    '''
-    Repositório de candidatos que utiliza um arquivo JSON para armazenar os dados.
-    Implementa os métodos definidos na interface ICandidatoRepositorio.
-    '''
-    
+class RepositorioEmpresaJSON(IEmpresaRepositorio):
+    """
+    Repositório de empresas que utiliza um arquivo JSON para armazenar os dados.
+    Implementa os métodos definidos na interface IEmpresaRepositorio.
+    """
+
     def _carregar_dados(self):
-        ''' Carrega os dados do arquivo JSON. Retorna uma lista de dicionários representando os candidatos.'''
+        """Carrega os dados do arquivo JSON. Retorna uma lista de dicionários representando as empresas."""
         if not os.path.exists(CAMINHO_ARQUIVO):
             return []
 
@@ -29,45 +29,45 @@ class RepositorioCandidatoJSON(ICandidatoRepositorio):
             return []
 
     def _salvar_dados(self, lista):
-        ''' Salva a lista de candidatos no arquivo JSON. Cada candidato é convertido para um dicionário antes de ser salvo.'''
+        """Salva a lista de empresas no arquivo JSON."""
         os.makedirs(os.path.dirname(CAMINHO_ARQUIVO), exist_ok=True)
         with open(CAMINHO_ARQUIVO, "w", encoding="utf-8") as f:
             json.dump(lista, f, indent=4, ensure_ascii=False)
 
-    def salvar(self, candidato: Candidato):
-        '''Salva um candidato no arquivo JSON.'''
+    def salvar(self, empresa: Empresa):
+        """Salva uma empresa no arquivo JSON."""
         dados = self._carregar_dados()
-        dados.append(candidato.to_dict())
+        dados.append(empresa.to_dict())
         self._salvar_dados(dados)
 
     def listar(self):
-        '''Lista todos os candidatos armazenados no arquivo JSON. Retorna uma lista de objetos Candidato.'''
+        """Lista todas as empresas armazenadas no arquivo JSON."""
         dados = self._carregar_dados()
-        return [Candidato.from_dict(d) for d in dados]
+        return [Empresa.from_dict(d) for d in dados]
 
-    def buscar_por_id(self, id_candidato: int):
-        '''
-        Busca um candidato pelo ID. Retorna um objeto Candidato se encontrado, ou None caso contrário.
-        '''
-        for candidato in self.listar():
-            if candidato.id == id_candidato:
-                return candidato
+    def buscar_por_id(self, id_empresa: int):
+        """Busca uma empresa pelo ID. Retorna Empresa ou None."""
+        for empresa in self.listar():
+            if empresa.id == id_empresa:
+                return empresa
         return None
 
     def buscar_por_filtros(self, **filtros):
-        '''Busca candidatos que correspondam aos filtros fornecidos. Os filtros são passados como argumentos nomeados e podem incluir qualquer atributo do candidato (ex: nome, cpf, áreas de interesse). Retorna uma lista de candidatos que correspondem aos critérios.
-        '''
-        candidatos = self.listar()
+        """
+        Busca empresas que correspondam aos filtros fornecidos.
+        Os filtros podem incluir qualquer atributo de Empresa (ex: nome, cnpj, porte).
+        """
+        empresas = self.listar()
         resultado = []
 
-        for candidato in candidatos:
+        for empresa in empresas:
             corresponde = True
 
             for campo, valor in filtros.items():
-                if not hasattr(candidato, campo):
-                    raise AttributeError(f"O campo '{campo}' não existe no candidato")
+                if not hasattr(empresa, campo):
+                    raise AttributeError(f"O campo '{campo}' não existe na empresa")
 
-                atributo = getattr(candidato, campo)
+                atributo = getattr(empresa, campo)
 
                 if isinstance(atributo, list):
                     if valor not in atributo:
@@ -79,30 +79,31 @@ class RepositorioCandidatoJSON(ICandidatoRepositorio):
                         break
 
             if corresponde:
-                resultado.append(candidato)
+                resultado.append(empresa)
 
         return resultado
 
-    def atualizar(self, candidato: Candidato):
-        '''
-    Atualiza um candidato existente no arquivo JSON. O candidato é identificado pelo ID. Se o candidato não for encontrado, uma exceção é levantada.
-        '''
+    def atualizar(self, empresa: Empresa):
+        """
+        Atualiza uma empresa existente no arquivo JSON.
+        A empresa é identificada pelo ID.
+        """
         dados = self._carregar_dados()
 
-        for i, c in enumerate(dados):
-            if c["id"] == candidato.id:
-                dados[i] = candidato.to_dict()
+        for i, e in enumerate(dados):
+            if e["id"] == empresa.id:
+                dados[i] = empresa.to_dict()
                 self._salvar_dados(dados)
                 return
 
-        raise ValueError("Candidato não encontrado")
+        raise ValueError("Empresa não encontrada")
 
-    def deletar(self, id_candidato: int):
-        ''' Deleta um candidato do arquivo JSON pelo ID. Se o candidato não for encontrado, uma exceção é levantada.'''
+    def deletar(self, id_empresa: int):
+        """Deleta uma empresa do arquivo JSON pelo ID."""
         dados = self._carregar_dados()
 
-        if not any(c["id"] == id_candidato for c in dados):
-            raise ValueError("Candidato não encontrado")
+        if not any(e["id"] == id_empresa for e in dados):
+            raise ValueError("Empresa não encontrada")
 
-        dados = [c for c in dados if c["id"] != id_candidato]
+        dados = [e for e in dados if e["id"] != id_empresa]
         self._salvar_dados(dados)
