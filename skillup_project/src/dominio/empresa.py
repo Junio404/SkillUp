@@ -77,3 +77,36 @@ class Empresa(EntidadePublicadora):
 
     def _str_(self):
         return f"Empresa: {self.nome} ({self.porte})"
+    
+    # --------------------
+    # Serialização
+    # --------------------
+
+    def to_dict(self):
+        """Converte a empresa para dicionário (para persistência)."""
+        return {
+            "id": self.id,
+            "nome": self.nome,
+            "cnpj": self.cnpj,
+            "porte": self.porte,
+        }
+
+    @classmethod
+    def from_dict(cls, dados: dict):
+        """Cria uma empresa a partir de um dicionário."""
+        return cls(
+            id_empresa=dados["id"],
+            nome=dados["nome"],
+            cnpj=dados["cnpj"],
+            porte=dados["porte"],
+        )
+    
+    def __str__(self):
+        """Representação textual."""
+        return (
+        f"ID: {self.id}\n"
+        f"Nome: {self.nome}\n"
+        f"CNPJ: {self.cnpj}\n"
+        f"Porte: {self.porte}\n"
+        "-------------------------"
+    )
