@@ -1,21 +1,65 @@
-from entidade_publicadora import EntidadePublicadora
-
-import json
-import os
-from entidade_publicadora import EntidadePublicadora
-
-CAMINHO_ARQUIVO = os.path.join("data", "instituicao_ensino.json")
-
+from src.dominio.entidade_publicadora import EntidadePublicadora
 
 class InstituicaoEnsino(EntidadePublicadora):
-    def __init__(self, id_instituicao: int, nome: str, cnpj: str,
-                 registro_educacional: str, tipo: str, credenciada: bool = True):
-        super().__init__(id_instituicao, nome, cnpj)
+    """
+    Representa uma Instituição de Ensino na plataforma.
+    Herda de EntidadePublicadora, sua função no sistema é publicar e gerenciar cursos.
+    """
+
+    def __init__(self, id_instituicao: int, razao_social: str, nome_fantasia: str, cnpj: str,
+                registro_educacional: str, tipo: str, senha: str, modalidades: str = "", credenciada: bool = True):
+        """
+        Inicializa uma nova instância de Instituição de Ensino.
+
+        """
+        super().__init__(id_instituicao, nome_fantasia, cnpj)
+        
+        self.razao_social = razao_social
         self.registro_educacional = registro_educacional
         self.tipo = tipo
+        self.modalidades = modalidades
+        self.senha = senha
         self.credenciada = credenciada
+        # Lista de áreas pode ser adicionada aqui se necessário, ou gerenciada externamente via InstituicaoAreaEnsino
 
     # ===== PROPERTIES =====
+    
+    @property
+    def razao_social(self):
+        return self._razao_social
+    
+    @razao_social.setter
+    def razao_social(self, valor):
+        if not valor:
+            raise ValueError("Razão Social é obrigatória")
+        self._razao_social = valor
+
+    @property
+    def nome_fantasia(self):
+        return self.nome
+    
+    @nome_fantasia.setter
+    def nome_fantasia(self, valor):
+        self.nome = valor
+
+    @property
+    def modalidades(self):
+        return self._modalidades
+
+    @modalidades.setter
+    def modalidades(self, valor):
+        self._modalidades = valor
+
+    @property
+    def senha(self):
+        return self._senha
+    
+    @senha.setter
+    def senha(self, valor):
+        if not valor:
+            raise ValueError("Senha é obrigatória")
+        self._senha = valor
+
     @property
     def registro_educacional(self):
         return self._registro_educacional
@@ -44,54 +88,60 @@ class InstituicaoEnsino(EntidadePublicadora):
             raise ValueError("Credenciada deve ser booleano")
         self._credenciada = valor
 
-    # ===== MÉTODOS DO DIAGRAMA =====
-
-    def criar_conta(self, repositorio):
-        """DIP: depende de abstração"""
-        repositorio.salvar(self)
-
-    def cadastrar_curso(self, curso, repositorio_curso):
-        self.validar_publicacao()
-        repositorio_curso.salvar(curso)
-
-    def gerenciar_cursos(self, repositorio_curso):
-        """Ex: listar, editar, pausar"""
-        return repositorio_curso.listar_por_instituicao(self.id)
-
     # ===== CONTRATO ABSTRATO =====
     def validar_publicacao(self):
+        """
+        Implementação do método abstrato de EntidadePublicadora.
+        """
         if not self.credenciada:
             raise PermissionError("Instituição não credenciada não pode publicar cursos")
+        return True
 
     # ===== JSON =====
     def to_dict(self):
+        """Converte a entidade para um dicionário."""
         return {
             "id": self.id,
-            "nome": self.nome,
+            "razao_social": self.razao_social,
+            "nome_fantasia": self.nome_fantasia,
             "cnpj": self.cnpj,
             "registro_educacional": self.registro_educacional,
             "tipo": self.tipo,
+            "modalidades": self.modalidades,
+            "senha": self.senha,
             "credenciada": self.credenciada
         }
 
     @staticmethod
     def from_dict(d):
+        """Cria uma instância de InstituicaoEnsino a partir de um dicionário."""
         return InstituicaoEnsino(
             id_instituicao=d["id"],
-            nome=d["nome"],
+            razao_social=d.get("razao_social", d.get("nome")), # Fallback para compatibilidade
+            nome_fantasia=d.get("nome_fantasia", d.get("nome")),
             cnpj=d["cnpj"],
             registro_educacional=d["registro_educacional"],
             tipo=d["tipo"],
+            senha=d.get("senha", ""),
+            modalidades=d.get("modalidades", ""),
             credenciada=d.get("credenciada", True)
         )
 
 class AreaEnsino:
+    """
+    Representa uma Área de conhecimento ou ensino
+    Utilizada para categorizar cursos e instituições.
+    """
     def __init__(self, id_area, nome_area):
         self.id_area = id_area
         self.nome_area = nome_area
         
 
 class InstituicaoAreaEnsino:
+    """
+    Entidade associativa que mapeia a relação N:N entre Instituição e Área de Ensino.
+    Indica quais áreas de conhecimento uma instituição abrange.
+    """
     def __init__(self, id_instituicao_area, id_instituicao, id_area):
         self.id_instituicao_area = id_instituicao_area
         self.id_instituicao = id_instituicao
