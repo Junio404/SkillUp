@@ -7,9 +7,9 @@ class InstituicaoEnsino(EntidadePublicadora):
     """
 
     def __init__(self, id_instituicao: int, razao_social: str, nome_fantasia: str, cnpj: str,
-                registro_educacional: str, tipo: str, senha: str, modalidades: str = "", credenciada: bool = True):
+                registro_educacional: str, tipo: str, modalidades: str = "", credenciada: bool = True):
         """
-        Inicializa uma nova instância de Instituição de Ensino.
+        Inicializa uma nova instância de Instituição de Ensino no domínio do sistema.
 
         """
         super().__init__(id_instituicao, nome_fantasia, cnpj)
@@ -18,7 +18,6 @@ class InstituicaoEnsino(EntidadePublicadora):
         self.registro_educacional = registro_educacional
         self.tipo = tipo
         self.modalidades = modalidades
-        self.senha = senha
         self.credenciada = credenciada
         # Lista de áreas pode ser adicionada aqui se necessário, ou gerenciada externamente via InstituicaoAreaEnsino
 
@@ -50,15 +49,6 @@ class InstituicaoEnsino(EntidadePublicadora):
     def modalidades(self, valor):
         self._modalidades = valor
 
-    @property
-    def senha(self):
-        return self._senha
-    
-    @senha.setter
-    def senha(self, valor):
-        if not valor:
-            raise ValueError("Senha é obrigatória")
-        self._senha = valor
 
     @property
     def registro_educacional(self):
@@ -108,7 +98,6 @@ class InstituicaoEnsino(EntidadePublicadora):
             "registro_educacional": self.registro_educacional,
             "tipo": self.tipo,
             "modalidades": self.modalidades,
-            "senha": self.senha,
             "credenciada": self.credenciada
         }
 
@@ -122,7 +111,6 @@ class InstituicaoEnsino(EntidadePublicadora):
             cnpj=d["cnpj"],
             registro_educacional=d["registro_educacional"],
             tipo=d["tipo"],
-            senha=d.get("senha", ""),
             modalidades=d.get("modalidades", ""),
             credenciada=d.get("credenciada", True)
         )

@@ -3,7 +3,7 @@ from src.dominio.candidato import Candidato
 from src.dominio.vaga import VagaCLT, VagaEstagio
 from src.dominio.candidatura import Candidatura
 from src.dominio.competencia import Competencia
-from src.dominio.curso import Curso
+from SkillUp.skillup_project.src.dominio.curso_abs import Curso
 import os
 from datetime import datetime
 
