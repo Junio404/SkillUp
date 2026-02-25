@@ -1,4 +1,4 @@
-from skillup_project.src.dominio.curso import Curso
+from skillup_project.src.dominio.curso import Curso 
 
 class CursoPresencial(Curso):
     def __init__(self, id_curso, nome, carga_horaria, endereco):
