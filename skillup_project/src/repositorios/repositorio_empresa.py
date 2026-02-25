@@ -3,6 +3,7 @@ import os
 
 from src.dominio.empresa import Empresa
 from src.interfaces.interface_empresa import IEmpresaRepositorio  # ajuste se o nome for diferente
+from src.repositorios.loader import JsonRepository
 
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
