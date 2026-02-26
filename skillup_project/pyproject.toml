@@ -11,7 +11,10 @@ dependencies = [
 ]
 
 [tool.poetry]
-packages = [{include = "skillup_project", from = "src"}]
+packages = [
+    {include = "src"},
+    {include = "skillup_project", from = "src"}
+]
 
 [build-system]
 requires = ["poetry-core>=2.0.0,<3.0.0"]
