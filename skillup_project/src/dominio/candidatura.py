@@ -2,6 +2,7 @@ from datetime import datetime
 from enum import Enum
 
 class StatusCandidatura(Enum):
+    """Enumeração para os status possíveis de uma candidatura."""
     ENVIADO = "Enviado"
     EM_ANALISE = "Em analise"
     ACEITO = "Aceito"
@@ -9,6 +10,9 @@ class StatusCandidatura(Enum):
     CANCELADO = "Cancelado"
 
 class Candidatura:
+    """
+    Entidade de domínio que representa o vínculo entre um Candidato e uma Vaga.
+    """
 
     def __init__(
         self,
@@ -18,6 +22,15 @@ class Candidatura:
         status: StatusCandidatura = StatusCandidatura.ENVIADO,
         data_candidatura: str = None
     ):
+        """
+        Cria uma nova candidatura.
+
+        param id_candidatura: Identificador único da candidatura
+        param id_vaga: ID da vaga sendo pleiteada
+        param id_candidato: ID do candidato
+        param status: Status atual
+        param data_candidatura: Data de criação
+        """
 
         self._validar_id(id_candidatura, "ID Candidatura")
         self._validar_id(id_vaga, "ID Vaga")
@@ -47,27 +60,30 @@ class Candidatura:
     # --------------------
 
     def _validar_id(self, valor, nome_campo):
-        
+        """Valida se o ID é um inteiro positivo."""
         if not isinstance(valor, int) or valor <= 0:
             raise ValueError(f"{nome_campo} deve ser um inteiro positivo.")
 
     # --------------------
     #     Properties
     # --------------------
-
+    """
+    Retorna o ID da candidatura.
+    Retorna o ID da vaga associada.
+    Retorna o ID do candidato associado.
+    Retorna a data da candidatura.
+    Retorna o status atual da candidatura.
+    """
     @property
     def id(self):
-        
         return self._id_candidatura
 
     @property
     def id_vaga(self):
-        
         return self._id_vaga
 
     @property
     def id_candidato(self):
-        
         return self._id_candidato
 
     @property
@@ -89,7 +105,10 @@ class Candidatura:
     # --------------------
     #     Métodos de Domínio
     # --------------------
-
+    """
+    Aprova a candidatura, alterando seu status para "Aceito".
+    Reprova a candidatura, alterando seu status para "Recusado".
+    """
     def aprovar(self):
         
         self.status = StatusCandidatura.ACEITO
@@ -99,13 +118,13 @@ class Candidatura:
         self.status = StatusCandidatura.RECUSADO
 
     def cancelar(self):
-        
+        """Atualiza o status para Cancelado (pelo candidato)."""
         if self.status in [StatusCandidatura.ACEITO, StatusCandidatura.RECUSADO]:
             raise ValueError("Não é possível cancelar uma candidatura já finalizada.")
         self.status = StatusCandidatura.CANCELADO
 
     def analisar(self):
-        
+        """Atualiza o status para Em Análise."""
         self.status = StatusCandidatura.EM_ANALISE
 
     # --------------------
@@ -113,6 +132,7 @@ class Candidatura:
     # --------------------
 
     def to_dict(self):
+        """Converte o objeto para dicionário (JSON)."""
         return {
             "id_candidatura": self.id,
             "id_vaga": self.id_vaga,
@@ -123,7 +143,7 @@ class Candidatura:
 
     @staticmethod
     def from_dict(d):
-        
+        """Cria uma instância de Candidatura a partir de um dicionário."""
         return Candidatura(
             id_candidatura=d["id_candidatura"],
             id_vaga=d["id_vaga"],
@@ -133,6 +153,7 @@ class Candidatura:
         )
 
     def __str__(self):
+        """Representação textual da candidatura."""
         return (
             f"Candidatura #{self.id}\n"
             f"Vaga ID: {self.id_vaga}\n"
