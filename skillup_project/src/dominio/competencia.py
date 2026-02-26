@@ -1,118 +1,113 @@
+from enum import Enum
+
+class Nivel(Enum):
+    """Enumeração para os níveis de competência."""
+    BAIXA = "Baixa"
+    MEDIA = "Media"
+    ALTA = "Alta"
+
 class Competencia:
-    """Entidade de domínio que representa uma competência."""
-
-    def __init__(
-        self,
-        id: int,
-        nome: str,
-        descricao: str
-    ):
+    """
+    Entidade base representando uma habilidade ou conhecimento.
+    """
+    def __init__(self, id_competencia: int, nome: str, descricao: str = None):
         """
-        Cria uma competência.
-
-        :param id: Inteiro positivo
-        :param nome: Nome único da competência
-        :param descricao: Descrição da competência
+        Cria uma nova competência.
+        param id_competencia: Identificador único.
+        param nome: Nome da competência (ex: Python, Gestão).
+        param descricao: Detalhamento do que é esperado.
         """
-        self._validar_id(id)
-        self._id = id
-
-        self.nome = nome
-        self.descricao = descricao
+        self._validar_id(id_competencia)
+        self._validar_texto(nome, "Nome")
+        
+        self._id = id_competencia
+        self._nome = nome
+        self._descricao = descricao
 
     # --------------------
     #     Validações
     # --------------------
-
     def _validar_id(self, valor):
-        """Valida ID."""
         if not isinstance(valor, int) or valor <= 0:
-            raise ValueError("ID deve ser inteiro positivo")
+            raise ValueError("ID deve ser um inteiro positivo.")
 
-    def _validar_nome(self, valor):
-        """Valida nome."""
+    def _validar_texto(self, valor, campo):
         if not isinstance(valor, str) or not valor.strip():
-            raise ValueError("Nome inválido")
-
-        if len(valor) > 150:
-            raise ValueError("Nome deve ter no máximo 150 caracteres")
-
-    def _validar_descricao(self, valor):
-        """Valida descrição."""
-        if not isinstance(valor, str):
-            raise TypeError("Descrição inválida")
+            raise ValueError(f"{campo} inválido.")
 
     # --------------------
     #     Properties
     # --------------------
+    @property
+    def id(self): return self._id
 
     @property
-    def id(self):
-        """Retorna ID."""
-        return self._id
-
-    @property
-    def nome(self):
-        """Retorna nome."""
-        return self._nome
+    def nome(self): return self._nome
 
     @nome.setter
     def nome(self, valor):
-        """Define nome."""
-        self._validar_nome(valor)
+        self._validar_texto(valor, "Nome")
         self._nome = valor
 
     @property
-    def descricao(self):
-        """Retorna descrição."""
-        return self._descricao
+    def descricao(self): return self._descricao
 
     @descricao.setter
     def descricao(self, valor):
-        """Define descrição."""
-        self._validar_descricao(valor)
+        if valor is not None and not isinstance(valor, str):
+            raise TypeError("Descrição deve ser texto.")
         self._descricao = valor
-
-    # --------------------
-    #     Métodos de Domínio
-    # --------------------
-
-    def atualizar_dado(self, campo: str, novo_valor):
-        """Atualiza atributo permitido."""
-        if campo == "id":
-            raise ValueError("'id' não pode ser alterado")
-
-        if not hasattr(self, campo):
-            raise AttributeError("Campo inexistente")
-
-        setattr(self, campo, novo_valor)
 
     # --------------------
     #     Serialização
     # --------------------
-
     def to_dict(self):
-        """Converte para dict."""
+        """Converte a competência para dicionário."""
         return {
             "id": self.id,
             "nome": self.nome,
             "descricao": self.descricao
         }
-
+    
     @staticmethod
     def from_dict(d):
-        """Cria a partir de dict."""
-        return Competencia(
-            id=d["id"],
-            nome=d["nome"],
-            descricao=d["descricao"]
-        )
+        return Competencia(d["id"], d["nome"], d.get("descricao"))
 
     def __str__(self):
-        """Representação textual."""
-        return (
-            f"ID: {self.id}\n"
-            f"Nome: {self.nome}\n"
-            f"Descrição: {self.descricao}\n"
-            "-------------------------"
-        )
+        return f"{self.nome} ({self.descricao or 'Sem descrição'})"
+
+
+class CompetenciaNivelada(Competencia):
+    """Classe base para competências que possuem um nível associado."""
+    def __init__(self, id_competencia: int, nome: str, nivel: Nivel, descricao: str = None):
+        super().__init__(id_competencia, nome, descricao)
+        self.nivel = nivel # Usa o setter para validar
+
+    @property
+    def nivel(self):
+        return self._nivel
+    
+    @nivel.setter
+    def nivel(self, valor):
+        if isinstance(valor, str):
+            try:
+                self._nivel = Nivel(valor)
+            except ValueError:
+                raise ValueError(f"Nível inválido: {valor}")
+        elif isinstance(valor, Nivel):
+            self._nivel = valor
+        else:
+            raise TypeError("Nível deve ser do tipo Enum Nivel.")
+
+    def to_dict(self):
+        data = super().to_dict()
+        data["nivel"] = self.nivel.value
+        return data
+
+class CompetenciaCandidato(CompetenciaNivelada):
+    """Competência possuída por um candidato."""
+    pass
+
+class CursoCompetencia(CompetenciaNivelada):
+    """Competência exigida por um curso ou vaga."""
+    pass
