@@ -13,10 +13,9 @@ class Competencia:
     def __init__(self, id_competencia: int, nome: str, descricao: str = None):
         """
         Cria uma nova competência.
-        
-        :param id_competencia: Identificador único.
-        :param nome: Nome da competência (ex: Python, Gestão).
-        :param descricao: Detalhamento do que é esperado.
+        param id_competencia: Identificador único.
+        param nome: Nome da competência (ex: Python, Gestão).
+        param descricao: Detalhamento do que é esperado.
         """
         self._validar_id(id_competencia)
         self._validar_texto(nome, "Nome")
@@ -80,7 +79,6 @@ class Competencia:
 
 class CompetenciaNivelada(Competencia):
     """Classe base para competências que possuem um nível associado."""
-
     def __init__(self, id_competencia: int, nome: str, nivel: Nivel, descricao: str = None):
         super().__init__(id_competencia, nome, descricao)
         self.nivel = nivel # Usa o setter para validar
@@ -111,5 +109,5 @@ class CompetenciaCandidato(CompetenciaNivelada):
     pass
 
 class CursoCompetencia(CompetenciaNivelada):
-    """Competência ensinada por um curso."""
+    """Competência exigida por um curso ou vaga."""
     pass
