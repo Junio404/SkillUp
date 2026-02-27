@@ -1,18 +1,15 @@
+from skillup_project.src.dominio.competencia import Nivel
+
 class RequisitoVaga:
     """Entidade de domínio que representa uma competência exigida por uma vaga."""
 
-    NIVEIS_VALIDOS = {
-        "iniciante": 0,
-        "intermediario": 1,
-        "avancado": 2
-    }
 
     def __init__(
         self,
         id: int,
         id_vaga: int,
         id_competencia: int,
-        nivel_minimo: str,
+        nivel_minimo: Nivel,
         obrigatorio: bool = True
     ):
         """
@@ -49,7 +46,7 @@ class RequisitoVaga:
         if not isinstance(valor, str):
             raise TypeError("Nível deve ser string")
 
-        if valor.lower() not in self.NIVEIS_VALIDOS:
+        if valor not in [nivel.name for nivel in Nivel]:
             raise ValueError(
                 "Nível inválido. Use: iniciante, intermediario ou avancado"
             )
@@ -81,7 +78,7 @@ class RequisitoVaga:
     @nivel_minimo.setter
     def nivel_minimo(self, valor):
         self._validar_nivel(valor)
-        self._nivel_minimo = valor.lower()
+        self._nivel_minimo = valor
 
     @property
     def obrigatorio(self):
@@ -110,8 +107,7 @@ class RequisitoVaga:
 
     def nivel_como_inteiro(self):
         """Retorna nível como inteiro (0,1,2) para persistência."""
-        return self.NIVEIS_VALIDOS[self._nivel_minimo]
-
+        return Nivel[self.nivel_minimo].value
     # --------------------
     #     Serialização
     # --------------------

@@ -2,9 +2,9 @@ from enum import Enum
 
 class Nivel(Enum):
     """Enumeração para os níveis de competência."""
-    BAIXA = "Baixa"
-    MEDIA = "Media"
-    ALTA = "Alta"
+    INICIANTE = 0
+    INTERMEDIARIO = 1
+    AVANCADO = 2
 
 class Competencia:
     """

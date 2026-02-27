@@ -1,18 +1,15 @@
+from skillup_project.src.dominio.competencia import Nivel
+
 class CursoCompetencia:
     """Entidade de domínio que representa a competência conferida por um curso."""
 
-    NIVEIS_VALIDOS = {
-        "iniciante": 0,
-        "intermediario": 1,
-        "avancado": 2
-    }
 
     def __init__(
         self,
         id: int,
         id_curso: int,
         id_competencia: int,
-        nivel_conferido: str
+        nivel_conferido: Nivel
     ):
         """
         Cria uma relação entre Curso e Competência.
@@ -46,7 +43,7 @@ class CursoCompetencia:
         if not isinstance(valor, str):
             raise TypeError("Nível deve ser string")
 
-        if valor.lower() not in self.NIVEIS_VALIDOS:
+        if valor not in [nivel.name for nivel in Nivel]:
             raise ValueError(
                 "Nível inválido. Use: iniciante, intermediario ou avancado"
             )
@@ -86,7 +83,7 @@ class CursoCompetencia:
 
     def nivel_como_inteiro(self):
         """Retorna nível como inteiro (0,1,2) para persistência."""
-        return self.NIVEIS_VALIDOS[self._nivel_conferido]
+        return Nivel[self.nivel_conferido.upper()].value
 
     # --------------------
     #     Serialização
