@@ -1,6 +1,6 @@
 from src.dominio.instituicao_ensino import InstituicaoEnsino
 from src.interfaces.interface_instituicao_ensino import IInstituicaoEnsino
-from src.repositorios.repositorio_curso import RepositorioCurso
+from SkillUp.skillup_project.src.interfaces.repositorio_curso import RepositorioCurso
 
 class ServiceInstituicaoEnsino:
     def _init_(self, repositorio_instituicao: IInstituicaoEnsino, repositorio_curso: RepositorioCurso):
