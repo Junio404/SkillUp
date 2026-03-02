@@ -17,6 +17,7 @@ from src.repositorios.repositorio_candidato import RepositorioCandidatoJSON
 from src.repositorios.repositorio_empresa import RepositorioEmpresaJSON
 from src.aplicacao.fluxo_candidato import FluxoCandidato
 from src.aplicacao.fluxo_empresa import FluxoEmpresa
+from src.aplicacao.fluxo_instituicao import FluxoInstituicao
 
 
 class AplicacaoSkillUp:
@@ -83,13 +84,13 @@ class AplicacaoSkillUp:
 
     def _executar_fluxo_instituicao(self) -> None:
         """Executa o fluxo de instituição de ensino"""
-        self._limpar_tela()
-        print("\nMódulo de Instituição de Ensino ainda não implementado.")
-        print("\nFuncionalidades em desenvolvimento:")
-        print("  • Login/Cadastro de Instituição")
-        print("  • Publicação de Cursos")
-        print("  • Gestão de Inscrições")
-        input("\nPressione ENTER para retornar...")
+        try:
+            fluxo = FluxoInstituicao(self.service_instituicao)
+            fluxo.executar()
+        except Exception as e:
+            self._limpar_tela()
+            print(f"\n❌ Erro ao executar fluxo de instituição: {e}")
+            input("Pressione ENTER para continuar...")
 
     def _exibir_despedida(self) -> None:
         """Exibe mensagem de despedida"""
