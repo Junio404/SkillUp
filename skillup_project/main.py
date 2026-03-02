@@ -15,6 +15,7 @@ from src.services.service_instituicao_ensino import ServiceInstituicaoEnsino
 from src.services.services_empresa import EmpresaService
 from src.repositorios.repositorio_candidato import RepositorioCandidatoJSON
 from src.repositorios.repositorio_empresa import RepositorioEmpresaJSON
+from src.aplicacao.fluxo_candidato import FluxoCandidato
 
 
 class AplicacaoSkillUp:
@@ -61,14 +62,13 @@ class AplicacaoSkillUp:
 
     def _executar_fluxo_candidato(self) -> None:
         """Executa o fluxo de candidato"""
-        self._limpar_tela()
-        print("\nMódulo de Candidato ainda não implementado.")
-        print("\nFuncionalidades em desenvolvimento:")
-        print("  • Login/Cadastro de Candidato")
-        print("  • Exploração de Vagas")
-        print("  • Exploração de Cursos")
-        print("  • Gestão de Candidaturas")
-        input("\nPressione ENTER para retornar...")
+        try:
+            fluxo = FluxoCandidato(self.service_candidato)
+            fluxo.executar()
+        except Exception as e:
+            self._limpar_tela()
+            print(f"\nErro ao executar fluxo de candidato: {e}")
+            input("Pressione ENTER para continuar...")
 
     def _executar_fluxo_empresa(self) -> None:
         """Executa o fluxo de empresa"""
@@ -125,13 +125,13 @@ class AplicacaoSkillUp:
                     return True
             else:
                 self._limpar_tela()
-                print("\n❌ Opção inválida! Digite um número entre 1 e 4.")
+                print("\nOpção inválida! Digite um número entre 1 e 4.")
                 input("Pressione ENTER para continuar...")
                 return True
 
         except ValueError:
             self._limpar_tela()
-            print("\n❌ Entrada inválida! Digite um número entre 1 e 4.")
+            print("\nEntrada inválida! Digite um número entre 1 e 4.")
             input("Pressione ENTER para continuar...")
             return True
 
@@ -153,7 +153,7 @@ def main():
         print("\n\nAplicação interrompida pelo usuário.")
         sys.exit(0)
     except Exception as e:
-        print(f"\n❌ Erro fatal na aplicação: {e}")
+        print(f"\nErro fatal na aplicação: {e}")
         sys.exit(1)
 
 
