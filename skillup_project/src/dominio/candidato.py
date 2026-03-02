@@ -1,208 +1,159 @@
-class Candidato:
-    """Entidade de domínio que representa um candidato."""
+import re
+from dataclasses import dataclass, field
+from typing import List, Protocol, Tuple
 
-    def __init__(
-        self,
-        id: int,
-        nome: str,
-        cpf: str,
-        email: str,
-        areas_interesse: list[str],
-        nivel_formacao: str
-    ):
-        """
-        Cria um candidato.
 
-        :param id: Inteiro positivo
-        :param nome: Nome do candidato
-        :param cpf: CPF com 11 dígitos
-        :param email: Email válido
-        :param areas_interesse: Lista de áreas
-        :param nivel_formacao: Formação acadêmica
-        """
-        self._validar_id(id)
-        self._id = id
+# ==============================
+# ABSTRAÇÕES (DIP)
+# ==============================
 
-        self.nome = nome
-        self.cpf = cpf
-        self.email = email
-        self.areas_interesse = areas_interesse
-        self.nivel_formacao = nivel_formacao
 
-    #--------------------
-    #     Validações
-    #--------------------
+class Validador(Protocol):
+    def validar(self, valor) -> None:
+        ...
 
-    def _validar_id(self, valor):
-        """Valida ID."""
+
+# ==============================
+# IMPLEMENTAÇÕES CONCRETAS
+# ==============================
+
+class IdValidador:
+    def validar(self, valor: int) -> None:
         if not isinstance(valor, int) or valor <= 0:
-            raise ValueError("ID deve ser inteiro positivo")
+            raise ValueError("ID deve ser inteiro positivo.")
 
-    def _validar_nome(self, valor):
-        """Valida nome."""
+
+class NomeValidador:
+    def validar(self, valor: str) -> None:
         if not isinstance(valor, str) or not valor.strip():
-            raise ValueError("Nome inválido")
+            raise ValueError("Nome inválido.")
 
-    def _validar_cpf(self, valor):
-        """Valida CPF."""
+
+class CpfValidador:
+    def validar(self, valor: str) -> None:
         if not isinstance(valor, str) or len(valor) != 11 or not valor.isdigit():
-            raise ValueError("CPF inválido")
+            raise ValueError("CPF inválido.")
 
-    def _validar_email(self, valor):
-        """Valida email."""
-        if not isinstance(valor, str) or "@" not in valor:
-            raise ValueError("Email inválido")
 
-    def _validar_areas(self, lista):
-        """Valida áreas de interesse."""
-        if not isinstance(lista, list):
-            raise TypeError("Áreas de interesse devem ser uma lista")
+class EmailValidador:
+    EMAIL_REGEX = r"^[\w\.-]+@[\w\.-]+\.\w+$"
 
-        if not lista:
-            raise ValueError("Informe ao menos uma área")
+    def validar(self, valor: str) -> None:
+        if not re.match(self.EMAIL_REGEX, valor):
+            raise ValueError("Email inválido.")
 
-        for area in lista:
+
+class AreasValidador:
+    def validar(self, valor: List[str]) -> None:
+        if not isinstance(valor, list) or not valor:
+            raise ValueError("Informe ao menos uma área.")
+
+        for area in valor:
             if not isinstance(area, str) or not area.strip():
-                raise ValueError("Área inválida")
+                raise ValueError("Área inválida.")
 
-    #--------------------
-    #     Properties
-    #--------------------
+
+class NivelFormacaoValidador:
+    def validar(self, valor: str) -> None:
+        if not isinstance(valor, str):
+            raise TypeError("Nível de formação inválido.")
+
+
+# ==============================
+# ENTIDADE DE DOMÍNIO
+# ==============================
+
+
+@dataclass
+class Candidato:
+    id: int
+    nome: str
+    _cpf: str = field(repr=False)
+    email: str
+    _areas_interesse: List[str] = field(default_factory=list, repr=False)
+    nivel_formacao: str = ""
+    curriculo: str | None = None
+
+    # Dependências injetadas
+    id_validador: Validador = field(default_factory=IdValidador, repr=False)
+    nome_validador: Validador = field(default_factory=NomeValidador, repr=False)
+    cpf_validador: Validador = field(default_factory=CpfValidador, repr=False)
+    email_validador: Validador = field(default_factory=EmailValidador, repr=False)
+    areas_validador: Validador = field(default_factory=AreasValidador, repr=False)
+    nivel_validador: Validador = field(default_factory=NivelFormacaoValidador, repr=False)
+
+    def __post_init__(self):
+        self.id_validador.validar(self.id)
+        self.nome_validador.validar(self.nome)
+        self.cpf_validador.validar(self._cpf)
+        self.email_validador.validar(self.email)
+        self.areas_validador.validar(self._areas_interesse)
+        self.nivel_validador.validar(self.nivel_formacao)
+
+        # Proteção contra mutação externa
+        self._areas_interesse = [a.strip() for a in self._areas_interesse]
+
+
+    # ==============================
+    # PROPRIEDADES
+    # ==============================
 
     @property
-    def id(self):
-        """Retorna ID."""
-        return self._id
-
-    @property
-    def nome(self):
-        """Retorna nome."""
-        return self._nome
-
-    @nome.setter
-    def nome(self, valor):
-        """Define nome."""
-        self._validar_nome(valor)
-        self._nome = valor
-
-    @property
-    def cpf(self):
-        """Retorna CPF."""
+    def cpf(self) -> str:
         return self._cpf
 
-    @cpf.setter
-    def cpf(self, valor):
-        """Define CPF (imutável)."""
-        if hasattr(self, "_cpf"):
-            raise ValueError("CPF não pode ser alterado")
-
-        self._validar_cpf(valor)
-        self._cpf = valor
-
     @property
-    def email(self):
-        """Retorna email."""
-        return self._email
+    def areas_interesse(self) -> Tuple[str, ...]:
+        return tuple(self._areas_interesse)
 
-    @email.setter
-    def email(self, valor):
-        """Define email."""
-        self._validar_email(valor)
-        self._email = valor
 
-    @property
-    def areas_interesse(self):
-        """Retorna cópia das áreas."""
-        return list(self._areas_interesse)  #exemplo proteção contra mutação externa
+    # ==============================
+    # REGRAS DE NEGÓCIO
+    # ==============================
 
-    @areas_interesse.setter
-    def areas_interesse(self, lista):
-        """Define áreas."""
-        self._validar_areas(lista)
-        self._areas_interesse = list(lista)
-
-    @property
-    def nivel_formacao(self):
-        """Retorna formação."""
-        return self._nivel_formacao
-
-    @nivel_formacao.setter
-    def nivel_formacao(self, valor):
-        """Define formação."""
-        if not isinstance(valor, str):
-            raise TypeError("Nível de formação inválido")
-
-        self._nivel_formacao = valor
-
-    #--------------------
-    #     Métodos de Domínio
-    #--------------------
-
-    def adicionar_area(self, area: str):
-        """Adiciona área."""
-        if not isinstance(area, str) or not area.strip():
-            raise ValueError("Área inválida")
-
+    def adicionar_area(self, area: str) -> None:
+        area = area.strip()
+        if not area:
+            raise ValueError("Área inválida.")
         if area in self._areas_interesse:
-            raise ValueError("Área já cadastrada")
-
+            raise ValueError("Área já cadastrada.")
         self._areas_interesse.append(area)
 
-    def remover_area(self, area: str):
-        """Remove área."""
+    def remover_area(self, area: str) -> None:
         if area not in self._areas_interesse:
-            raise ValueError("Área não encontrada")
-
-        if len(self._areas_interesse) == 1:
-            raise ValueError("Ao menos uma área é obrigatória")
-
+            raise ValueError("Área não encontrada.")
+        if len(self._areas_interesse) <= 1:
+            raise ValueError("Ao menos uma área é obrigatória.")
         self._areas_interesse.remove(area)
 
-    def atualizar_dado(self, campo: str, novo_valor):
-        """Atualiza atributo permitido."""
-        if campo in ("id", "cpf"):
-            raise ValueError(f"'{campo}' não pode ser alterado")
 
-        if not hasattr(self, campo):
-            raise AttributeError("Campo inexistente")
+# ==============================
+# MAPPER (Responsabilidade isolada)
+# ==============================
 
-        setattr(self, campo, novo_valor)
 
-    #--------------------
-    #     Serialização
-    #--------------------
+class CandidatoMapper:
 
-    def to_dict(self):
-        """Converte para dict."""
+    @staticmethod
+    def to_dict(candidato: Candidato) -> dict:
         return {
-            "id": self.id,
-            "nome": self.nome,
-            "cpf": self.cpf,
-            "email": self.email,
-            "areas_interesse": self._areas_interesse,
-            "nivel_formacao": self.nivel_formacao
+            "id": candidato.id,
+            "nome": candidato.nome,
+            "cpf": candidato.cpf,
+            "email": candidato.email,
+            "areas_interesse": list(candidato.areas_interesse),
+            "nivel_formacao": candidato.nivel_formacao,
+            "curriculo": candidato.curriculo
         }
 
     @staticmethod
-    def from_dict(d):
-        """Cria a partir de dict."""
+    def from_dict(dados: dict) -> Candidato:
         return Candidato(
-            id=d["id"],
-            nome=d["nome"],
-            cpf=d["cpf"],
-            email=d["email"],
-            areas_interesse=d["areas_interesse"],
-            nivel_formacao=d["nivel_formacao"]
-        )
-
-    def __str__(self):
-        """Representação textual."""
-        return (
-            f"ID: {self.id}\n"
-            f"Nome: {self.nome}\n"
-            f"CPF: {self.cpf}\n"
-            f"Email: {self.email}\n"
-            f"Áreas: {', '.join(self._areas_interesse)}\n"
-            f"Formação: {self.nivel_formacao}\n"
-            "-------------------------"
+            id=dados["id"],
+            nome=dados["nome"],
+            _cpf=dados["cpf"],
+            email=dados["email"],
+            _areas_interesse=dados["areas_interesse"],
+            nivel_formacao=dados["nivel_formacao"],
+            curriculo=dados.get("curriculo")
         )
