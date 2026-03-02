@@ -1,95 +1,52 @@
-from src.dominio.entidade_publicadora import EntidadePublicadora
+from dataclasses import dataclass, field
+from typing import List
 
+from .entidade_publicadora import EntidadePublicadora
+from .validators import (
+    IdValidador,
+    StrValidador,
+    CnpjValidador,
+    Validador,
+)
+
+
+@dataclass
 class InstituicaoEnsino(EntidadePublicadora):
-    """
-    Representa uma Instituição de Ensino na plataforma.
-    Herda de EntidadePublicadora, sua função no sistema é publicar e gerenciar cursos.
-    """
+    id: int
+    razao_social: str
+    nome_fantasia: str
+    _cnpj: str = field(repr=False)
+    registro_educacional: str
+    tipo: str
+    modalidades: List[str] = field(default_factory=list)
+    credenciada: bool = True
 
-    def __init__(self, id_instituicao: int, razao_social: str, nome_fantasia: str, cnpj: str,
-                registro_educacional: str, tipo: str, modalidades: str = "", credenciada: bool = True):
-        """
-        Inicializa uma nova instância de Instituição de Ensino no domínio do sistema.
+    # validações
+    id_validador: Validador = field(default_factory=IdValidador, repr=False)
+    texto_validador: Validador = field(default_factory=StrValidador, repr=False)
+    cnpj_validador: Validador = field(default_factory=CnpjValidador, repr=False)
 
-        """
-        super().__init__(id_instituicao, nome_fantasia, cnpj)
-        
-        self.razao_social = razao_social
-        self.registro_educacional = registro_educacional
-        self.tipo = tipo
-        self.modalidades = modalidades
-        self.credenciada = credenciada
-        # Lista de áreas pode ser adicionada aqui se necessário, ou gerenciada externamente via InstituicaoAreaEnsino
-
-    # ===== PROPERTIES =====
-    
-    @property
-    def razao_social(self):
-        return self._razao_social
-    
-    @razao_social.setter
-    def razao_social(self, valor):
-        if not valor:
-            raise ValueError("Razão Social é obrigatória")
-        self._razao_social = valor
-
-    @property
-    def nome_fantasia(self):
-        return self.nome
-    
-    @nome_fantasia.setter
-    def nome_fantasia(self, valor):
-        self.nome = valor
-
-    @property
-    def modalidades(self):
-        return self._modalidades
-
-    @modalidades.setter
-    def modalidades(self, valor):
-        self._modalidades = valor
-
-
-    @property
-    def registro_educacional(self):
-        return self._registro_educacional
-
-    @registro_educacional.setter
-    def registro_educacional(self, valor):
-        if not valor:
-            raise ValueError("Registro educacional é obrigatório")
-        self._registro_educacional = valor
-
-    @property
-    def tipo(self):
-        return self._tipo
-
-    @tipo.setter
-    def tipo(self, valor):
-        self._tipo = valor
-
-    @property
-    def credenciada(self):
-        return self._credenciada
-
-    @credenciada.setter
-    def credenciada(self, valor):
-        if not isinstance(valor, bool):
+    def __post_init__(self):
+        self.id_validador.validar(self.id)
+        self.texto_validador.validar(self.razao_social)
+        self.texto_validador.validar(self.nome_fantasia)
+        self.cnpj_validador.validar(self._cnpj)
+        self.texto_validador.validar(self.registro_educacional)
+        if not isinstance(self.credenciada, bool):
             raise ValueError("Credenciada deve ser booleano")
-        self._credenciada = valor
 
-    # ===== CONTRATO ABSTRATO =====
-    def validar_publicacao(self):
-        """
-        Implementação do método abstrato de EntidadePublicadora.
-        """
+    @property
+    def cnpj(self) -> str:
+        return self._cnpj
+
+    # ===== contrato abstrato =====
+    def validar_publicacao(self) -> bool:
         if not self.credenciada:
             raise PermissionError("Instituição não credenciada não pode publicar cursos")
         return True
 
-    # ===== JSON =====
-    def to_dict(self):
-        """Converte a entidade para um dicionário."""
+    # ===== serialização =====
+    def to_dict(self) -> dict:
         return {
             "id": self.id,
             "razao_social": self.razao_social,
@@ -98,39 +55,45 @@ class InstituicaoEnsino(EntidadePublicadora):
             "registro_educacional": self.registro_educacional,
             "tipo": self.tipo,
             "modalidades": self.modalidades,
-            "credenciada": self.credenciada
+            "credenciada": self.credenciada,
         }
 
-    @staticmethod
-    def from_dict(d):
-        """Cria uma instância de InstituicaoEnsino a partir de um dicionário."""
-        return InstituicaoEnsino(
-            id_instituicao=d["id"],
-            razao_social=d.get("razao_social", d.get("nome")), # Fallback para compatibilidade
+    @classmethod
+    def from_dict(cls, d: dict):
+        return cls(
+            id=d["id"],
+            razao_social=d.get("razao_social", d.get("nome")),
             nome_fantasia=d.get("nome_fantasia", d.get("nome")),
-            cnpj=d["cnpj"],
+            _cnpj=d["cnpj"],
             registro_educacional=d["registro_educacional"],
             tipo=d["tipo"],
-            modalidades=d.get("modalidades", ""),
-            credenciada=d.get("credenciada", True)
+            modalidades=d.get("modalidades", []),
+            credenciada=d.get("credenciada", True),
         )
 
-class AreaEnsino:
-    """
-    Representa uma Área de conhecimento ou ensino
-    Utilizada para categorizar cursos e instituições.
-    """
-    def __init__(self, id_area, nome_area):
-        self.id_area = id_area
-        self.nome_area = nome_area
-        
 
+@dataclass
+class AreaEnsino:
+    id_area: int
+    nome_area: str
+
+    id_validador: Validador = field(default_factory=IdValidador, repr=False)
+    texto_validador: Validador = field(default_factory=StrValidador, repr=False)
+
+    def __post_init__(self):
+        self.id_validador.validar(self.id_area)
+        self.texto_validador.validar(self.nome_area)
+
+
+@dataclass
 class InstituicaoAreaEnsino:
-    """
-    Entidade associativa que mapeia a relação N:N entre Instituição e Área de Ensino.
-    Indica quais áreas de conhecimento uma instituição abrange.
-    """
-    def __init__(self, id_instituicao_area, id_instituicao, id_area):
-        self.id_instituicao_area = id_instituicao_area
-        self.id_instituicao = id_instituicao
-        self.id_area = id_area
+    id_instituicao_area: int
+    id_instituicao: int
+    id_area: int
+
+    id_validador: Validador = field(default_factory=IdValidador, repr=False)
+
+    def __post_init__(self):
+        self.id_validador.validar(self.id_instituicao_area)
+        self.id_validador.validar(self.id_instituicao)
+        self.id_validador.validar(self.id_area)

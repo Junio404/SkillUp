@@ -1,136 +1,154 @@
 from abc import ABC, abstractmethod
+from dataclasses import dataclass, field
 from enum import Enum
+from typing import List, Tuple
+
+from .validators import (
+    IdValidador,
+    StrValidador,
+    Validador,
+)
+
 
 class Modalidade(Enum):
-    """Enumeração para as modalidades de trabalho de uma vaga."""
     PRESENCIAL = "Presencial"
     REMOTO = "Remoto"
     HIBRIDO = "Híbrido"
 
+
 class TipoVaga(Enum):
-    """Enumeração para os tipos de contrato de uma vaga."""
     EMPREGO = "Emprego"
     ESTAGIO = "Estágio"
     TRAINEE = "Trainee"
 
+
+@dataclass
 class Vaga(ABC):
-    """
-    Classe abstrata que representa uma Vaga no sistema.
-    Define a estrutura base e comportamentos comuns para todos os tipos de vagas.
-    """
+    id: int
+    titulo: str
+    descricao: str
+    area: str
+    modalidade: Modalidade
+    tipo: TipoVaga
+    prazo_inscricao: str | None = None
 
-    def __init__(self, id_vaga: int, titulo: str, descricao: str, area: str,
-                modalidade: Modalidade, tipo: TipoVaga, prazo_inscricao: str = None):
-        """
-        Inicializa uma nova Vaga.
-        param id_vaga: Identificador único da vaga (inteiro positivo).
-        param titulo: Título da vaga.
-        param descricao: Descrição detalhada das atividades.
-        param area: Área de atuação.
-        param modalidade: Modalidade de trabalho
-        param tipo: Tipo de contrato
-        param prazo_inscricao: Data limite para inscrição
-        """
-        if not isinstance(id_vaga, int) or id_vaga <= 0:
-            raise ValueError("ID da vaga deve ser inteiro positivo.")
+    requisitos: List[str] = field(default_factory=list, repr=False)
+    ativa: bool = True
 
-        if not titulo or not descricao or not area:
-            raise ValueError("Título, descrição e área são obrigatórios.")
+    # dependências de validação
+    id_validador: Validador = field(default_factory=IdValidador, repr=False)
+    texto_validador: Validador = field(default_factory=StrValidador, repr=False)
 
-        self.id_vaga = id_vaga
-        self.titulo = titulo
-        self.descricao = descricao
-        self.area = area
-        # Validação de Enum simplificada
-        self.modalidade = modalidade
-        self.tipo = tipo
-        self.prazo_inscricao = prazo_inscricao
-        self.requisitos = []
-        self.ativa = True  # Controle de estado (publicada/pausada)
+    def __post_init__(self):
+        self.id_validador.validar(self.id)
+        self.texto_validador.validar(self.titulo)
+        self.texto_validador.validar(self.descricao)
+        self.texto_validador.validar(self.area)
 
     # --------------------
-    #     Métodos de Domínio
+    # Métodos de domínio
     # --------------------
     @abstractmethod
     def calcular_custo_contratacao(self):
-        """
-        Método abstrato para cálculo de custos de contratação.
-        Deve ser implementado pelas subclasses (VagaCLT, VagaEstagio).
-        """
-        pass
+        ...
 
-    def adicionar_requisito(self, requisito: str):
-        """
-        Adiciona um requisito à lista de requisitos da vaga.
-        param requisito: Descrição do requisito.
-        """
-
+    def adicionar_requisito(self, requisito: str) -> None:
+        requisito = requisito.strip()
         if not requisito:
             raise ValueError("Requisito não pode ser vazio.")
         self.requisitos.append(requisito)
 
-    def pausar(self):
-        """Pausa a vaga, impedindo novas candidaturas."""
+    def pausar(self) -> None:
         self.ativa = False
 
-    def publicar(self):
-        """Publica a vaga, permitindo novas candidaturas."""
+    def publicar(self) -> None:
         self.ativa = True
 
-    def editar(self, titulo: str = None, descricao: str = None):
-        """Edita os dados da vaga."""
-        if titulo: self.titulo = titulo
-        if descricao: self.descricao = descricao
+    def editar(self, titulo: str = None, descricao: str = None) -> None:
+        if titulo:
+            self.texto_validador.validar(titulo)
+            self.titulo = titulo
+        if descricao:
+            self.texto_validador.validar(descricao)
+            self.descricao = descricao
 
     # --------------------
-    #     Serialização
+    # Serialização (mapper)
     # --------------------
-    def to_dict(self):
-        """Converte a vaga para um dicionário json."""
+    def to_dict(self) -> dict:
         return {
-            "id": self.id_vaga,
+            "id": self.id,
             "titulo": self.titulo,
             "descricao": self.descricao,
             "area": self.area,
-            "modalidade": self.modalidade.value if hasattr(self.modalidade, 'value') else self.modalidade,
-            "tipo": self.tipo.value if hasattr(self.tipo, 'value') else self.tipo,
-            "requisitos": self.requisitos,
+            "modalidade": self.modalidade.value,
+            "tipo": self.tipo.value,
+            "requisitos": list(self.requisitos),
             "ativa": self.ativa,
-            "prazo_inscricao": self.prazo_inscricao
+            "prazo_inscricao": self.prazo_inscricao,
         }
 
-class VagaCLT(Vaga):
-    """Representa uma vaga de emprego formal."""
-    def __init__(self, id_vaga, titulo, descricao, area, modalidade, salario_base: float):
-        super().__init__(id_vaga, titulo, descricao, area, modalidade, TipoVaga.EMPREGO)
-        if salario_base <= 0:
-            raise ValueError("Salário base deve ser positivo")
-        self.salario_base = salario_base
+    @classmethod
+    def from_dict(cls, d: dict):
+        # subclass should call this via super() or override
+        return cls(
+            id=d["id"],
+            titulo=d["titulo"],
+            descricao=d["descricao"],
+            area=d["area"],
+            modalidade=Modalidade(d["modalidade"]),
+            tipo=TipoVaga(d["tipo"]),
+            prazo_inscricao=d.get("prazo_inscricao"),
+        )
 
-    def calcular_custo_contratacao(self):
-        """Calcula custo de contratação com base no salário base."""
+
+@dataclass
+class VagaCLT(Vaga):
+    salario_base: float
+
+    def __post_init__(self):
+        super().__post_init__()
+        if self.salario_base <= 0:
+            raise ValueError("Salário base deve ser positivo")
+
+    def calcular_custo_contratacao(self) -> float:
         return self.salario_base * 1.8
 
-    def to_dict(self):
+    def to_dict(self) -> dict:
         data = super().to_dict()
         data["salario_base"] = self.salario_base
         return data
 
-class VagaEstagio(Vaga):
-    """Representa uma vaga de estágio."""
-    def __init__(self, id_vaga, titulo, descricao, area, modalidade, bolsa_auxilio: float, instituicao_conveniada: str):
-        super().__init__(id_vaga, titulo, descricao, area, modalidade, TipoVaga.ESTAGIO)
-        if bolsa_auxilio <= 0:
-            raise ValueError("Bolsa auxílio deve ser positiva")
-        self.bolsa_auxilio = bolsa_auxilio
-        self.instituicao_conveniada = instituicao_conveniada
+    @classmethod
+    def from_dict(cls, d: dict):
+        vaga = super().from_dict(d)
+        vaga.salario_base = d["salario_base"]
+        return vaga
 
-    def calcular_custo_contratacao(self):
-        """Calcula custo: Bolsa * 1.1"""
+
+@dataclass
+class VagaEstagio(Vaga):
+    bolsa_auxilio: float
+    instituicao_conveniada: str
+
+    def __post_init__(self):
+        super().__post_init__()
+        if self.bolsa_auxilio <= 0:
+            raise ValueError("Bolsa auxílio deve ser positiva")
+        self.texto_validador.validar(self.instituicao_conveniada)
+
+    def calcular_custo_contratacao(self) -> float:
         return self.bolsa_auxilio * 1.1
 
-    def to_dict(self):
+    def to_dict(self) -> dict:
         data = super().to_dict()
         data["bolsa_auxilio"] = self.bolsa_auxilio
         data["instituicao_conveniada"] = self.instituicao_conveniada
         return data
+
+    @classmethod
+    def from_dict(cls, d: dict):
+        vaga = super().from_dict(d)
+        vaga.bolsa_auxilio = d["bolsa_auxilio"]
+        vaga.instituicao_conveniada = d["instituicao_conveniada"]
+        return vaga
