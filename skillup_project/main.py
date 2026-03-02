@@ -16,6 +16,7 @@ from src.services.services_empresa import EmpresaService
 from src.repositorios.repositorio_candidato import RepositorioCandidatoJSON
 from src.repositorios.repositorio_empresa import RepositorioEmpresaJSON
 from src.aplicacao.fluxo_candidato import FluxoCandidato
+from src.aplicacao.fluxo_empresa import FluxoEmpresa
 
 
 class AplicacaoSkillUp:
@@ -72,13 +73,13 @@ class AplicacaoSkillUp:
 
     def _executar_fluxo_empresa(self) -> None:
         """Executa o fluxo de empresa"""
-        self._limpar_tela()
-        print("\nMódulo de Empresa ainda não implementado.")
-        print("\nFuncionalidades em desenvolvimento:")
-        print("  • Login/Cadastro de Empresa")
-        print("  • Publicação de Vagas")
-        print("  • Gestão de Candidaturas")
-        input("\nPressione ENTER para retornar...")
+        try:
+            fluxo = FluxoEmpresa(self.service_empresa)
+            fluxo.executar()
+        except Exception as e:
+            self._limpar_tela()
+            print(f"\nErro ao executar fluxo de empresa: {e}")
+            input("Pressione ENTER para continuar...")
 
     def _executar_fluxo_instituicao(self) -> None:
         """Executa o fluxo de instituição de ensino"""
