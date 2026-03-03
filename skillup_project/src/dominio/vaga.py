@@ -6,9 +6,19 @@ from typing import List, Tuple
 from .validators import (
     IdValidador,
     StrValidador,
+    ModalidadeValidador,
+    TipoVagaValidador,
+    RequisitosValidador,
+    SalarioValidador,
+    PrazoValidador,
+    AtivoValidador,
     Validador,
 )
 
+
+# ==============================
+# ENUMS
+# ==============================
 
 class Modalidade(Enum):
     PRESENCIAL = "Presencial"
@@ -21,6 +31,10 @@ class TipoVaga(Enum):
     ESTAGIO = "Estágio"
     TRAINEE = "Trainee"
 
+
+# ==============================
+# ENTIDADES DE DOMÍNIO
+# ==============================
 
 @dataclass
 class Vaga(ABC):
@@ -35,19 +49,29 @@ class Vaga(ABC):
     requisitos: List[str] = field(default_factory=list, repr=False)
     ativa: bool = True
 
-    # dependências de validação
     id_validador: Validador = field(default_factory=IdValidador, repr=False)
     texto_validador: Validador = field(default_factory=StrValidador, repr=False)
+    modalidade_validador: Validador = field(default_factory=ModalidadeValidador, repr=False)
+    tipo_validador: Validador = field(default_factory=TipoVagaValidador, repr=False)
+    requisitos_validador: Validador = field(default_factory=RequisitosValidador, repr=False)
+    prazo_validador: Validador = field(default_factory=PrazoValidador, repr=False)
+    ativo_validador: Validador = field(default_factory=AtivoValidador, repr=False)
 
     def __post_init__(self):
         self.id_validador.validar(self.id)
         self.texto_validador.validar(self.titulo)
         self.texto_validador.validar(self.descricao)
         self.texto_validador.validar(self.area)
+        self.modalidade_validador.validar(self.modalidade)
+        self.tipo_validador.validar(self.tipo)
+        self.requisitos_validador.validar(self.requisitos)
+        self.prazo_validador.validar(self.prazo_inscricao)
+        self.ativo_validador.validar(self.ativa)
 
-    # --------------------
-    # Métodos de domínio
-    # --------------------
+    # ==============================
+    # REGRAS DE NEGÓCIO
+    # ==============================
+
     @abstractmethod
     def calcular_custo_contratacao(self):
         ...
@@ -72,9 +96,10 @@ class Vaga(ABC):
             self.texto_validador.validar(descricao)
             self.descricao = descricao
 
-    # --------------------
-    # Serialização (mapper)
-    # --------------------
+    # ==============================
+    # MAPPER BASE
+    # ==============================
+
     def to_dict(self) -> dict:
         return {
             "id": self.id,
@@ -88,28 +113,17 @@ class Vaga(ABC):
             "prazo_inscricao": self.prazo_inscricao,
         }
 
-    @classmethod
-    def from_dict(cls, d: dict):
-        # subclass should call this via super() or override
-        return cls(
-            id=d["id"],
-            titulo=d["titulo"],
-            descricao=d["descricao"],
-            area=d["area"],
-            modalidade=Modalidade(d["modalidade"]),
-            tipo=TipoVaga(d["tipo"]),
-            prazo_inscricao=d.get("prazo_inscricao"),
-        )
-
 
 @dataclass
 class VagaCLT(Vaga):
-    salario_base: float
+    salario_base: float = 0.0
+
+    salario_validador: Validador = field(default_factory=SalarioValidador, repr=False)
 
     def __post_init__(self):
         super().__post_init__()
-        if self.salario_base <= 0:
-            raise ValueError("Salário base deve ser positivo")
+        if self.salario_base > 0:
+            self.salario_validador.validar(self.salario_base)
 
     def calcular_custo_contratacao(self) -> float:
         return self.salario_base * 1.8
@@ -117,24 +131,21 @@ class VagaCLT(Vaga):
     def to_dict(self) -> dict:
         data = super().to_dict()
         data["salario_base"] = self.salario_base
+        data["tipo_vaga"] = "CLT"
         return data
-
-    @classmethod
-    def from_dict(cls, d: dict):
-        vaga = super().from_dict(d)
-        vaga.salario_base = d["salario_base"]
-        return vaga
 
 
 @dataclass
 class VagaEstagio(Vaga):
-    bolsa_auxilio: float
-    instituicao_conveniada: str
+    bolsa_auxilio: float = 0.0
+    instituicao_conveniada: str = ""
+
+    bolsa_validador: Validador = field(default_factory=SalarioValidador, repr=False)
 
     def __post_init__(self):
         super().__post_init__()
-        if self.bolsa_auxilio <= 0:
-            raise ValueError("Bolsa auxílio deve ser positiva")
+        if self.bolsa_auxilio > 0:
+            self.bolsa_validador.validar(self.bolsa_auxilio)
         self.texto_validador.validar(self.instituicao_conveniada)
 
     def calcular_custo_contratacao(self) -> float:
@@ -144,11 +155,54 @@ class VagaEstagio(Vaga):
         data = super().to_dict()
         data["bolsa_auxilio"] = self.bolsa_auxilio
         data["instituicao_conveniada"] = self.instituicao_conveniada
+        data["tipo_vaga"] = "ESTAGIO"
         return data
 
-    @classmethod
-    def from_dict(cls, d: dict):
-        vaga = super().from_dict(d)
-        vaga.bolsa_auxilio = d["bolsa_auxilio"]
-        vaga.instituicao_conveniada = d["instituicao_conveniada"]
-        return vaga
+
+# ==============================
+# MAPPERS
+# ==============================
+
+class VagaCLTMapper:
+
+    @staticmethod
+    def to_dict(vaga: VagaCLT) -> dict:
+        return vaga.to_dict()
+
+    @staticmethod
+    def from_dict(d: dict) -> VagaCLT:
+        return VagaCLT(
+            id=d["id"],
+            titulo=d["titulo"],
+            descricao=d["descricao"],
+            area=d["area"],
+            modalidade=Modalidade(d["modalidade"]),
+            tipo=TipoVaga(d["tipo"]),
+            prazo_inscricao=d.get("prazo_inscricao"),
+            requisitos=d.get("requisitos", []),
+            ativa=d.get("ativa", True),
+            salario_base=d.get("salario_base", 0.0),
+        )
+
+
+class VagaEstagioMapper:
+
+    @staticmethod
+    def to_dict(vaga: VagaEstagio) -> dict:
+        return vaga.to_dict()
+
+    @staticmethod
+    def from_dict(d: dict) -> VagaEstagio:
+        return VagaEstagio(
+            id=d["id"],
+            titulo=d["titulo"],
+            descricao=d["descricao"],
+            area=d["area"],
+            modalidade=Modalidade(d["modalidade"]),
+            tipo=TipoVaga(d["tipo"]),
+            prazo_inscricao=d.get("prazo_inscricao"),
+            requisitos=d.get("requisitos", []),
+            ativa=d.get("ativa", True),
+            bolsa_auxilio=d.get("bolsa_auxilio", 0.0),
+            instituicao_conveniada=d.get("instituicao_conveniada", ""),
+        )

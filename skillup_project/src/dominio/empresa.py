@@ -10,6 +10,17 @@ from .validators import (
 )
 
 
+# ==============================
+# VALIDATORS
+# ==============================
+
+# (Utilizando os validators já definidos em validators.py)
+
+
+# ==============================
+# ENTIDADE DE DOMÍNIO
+# ==============================
+
 @dataclass
 class Empresa:
     id: int
@@ -17,7 +28,6 @@ class Empresa:
     _cnpj: str = field(repr=False)
     porte: str
 
-    # validação
     id_validador: Validador = field(default_factory=IdValidador, repr=False)
     nome_validador: Validador = field(default_factory=StrValidador, repr=False)
     cnpj_validador: Validador = field(default_factory=CnpjValidador, repr=False)
@@ -33,9 +43,10 @@ class Empresa:
     def cnpj(self) -> str:
         return self._cnpj
 
-    # --------------------
-    # Métodos de domínio
-    # --------------------
+    # ==============================
+    # REGRAS DE NEGÓCIO
+    # ==============================
+
     def validar_publicacao(self, oportunidade) -> bool:
         return True
 
@@ -43,31 +54,27 @@ class Empresa:
         limites = {"pequeno": 5, "medio": 15, "grande": 50}
         return limites.get(self.porte, 0)
 
-    # --------------------
-    # Serialização (mapper)
-    # --------------------
-    def to_dict(self) -> dict:
+
+# ==============================
+# MAPPER
+# ==============================
+
+class EmpresaMapper:
+
+    @staticmethod
+    def to_dict(empresa: Empresa) -> dict:
         return {
-            "id": self.id,
-            "nome": self.nome,
-            "cnpj": self.cnpj,
-            "porte": self.porte,
+            "id": empresa.id,
+            "nome": empresa.nome,
+            "cnpj": empresa.cnpj,
+            "porte": empresa.porte,
         }
 
-    @classmethod
-    def from_dict(cls, dados: dict):
-        return cls(
+    @staticmethod
+    def from_dict(dados: dict) -> Empresa:
+        return Empresa(
             id=dados["id"],
             nome=dados["nome"],
             _cnpj=dados["cnpj"],
             porte=dados["porte"],
-        )
-
-    def __str__(self) -> str:
-        return (
-            f"ID: {self.id}\n"
-            f"Nome: {self.nome}\n"
-            f"CNPJ: {self.cnpj}\n"
-            f"Porte: {self.porte}\n"
-            "-------------------------"
         )

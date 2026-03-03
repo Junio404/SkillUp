@@ -1,9 +1,12 @@
 from dataclasses import dataclass, field
 from typing import Dict
 
-from .validators import IdValidador, StrValidador, Validador
-from .competencia import Nivel
+from .validators import IdValidador, StrValidador, NivelAtualizavelValidador, Validador
 
+
+# ==============================
+# ENTIDADE DE DOMÍNIO
+# ==============================
 
 @dataclass
 class CompetenciaCandidato:
@@ -20,55 +23,50 @@ class CompetenciaCandidato:
 
     id_validador: Validador = field(default_factory=IdValidador, repr=False)
     texto_validador: Validador = field(default_factory=StrValidador, repr=False)
+    nivel_validador: Validador = field(default_factory=NivelAtualizavelValidador, repr=False)
 
     def __post_init__(self):
         self.id_validador.validar(self.id)
         self.id_validador.validar(self.id_candidato)
         self.id_validador.validar(self.id_competencia)
         self.texto_validador.validar(self.nivel_atual)
+        self.nivel_validador.validar(self.nivel_atual)
         self.nivel_atual = self.nivel_atual.lower()
-        if self.nivel_atual not in self._valid_levels:
-            raise ValueError("Nível inválido. Use: iniciante, intermediario ou avancado")
 
-    # --------------------
-    # Métodos de domínio
-    # --------------------
+    # ==============================
+    # REGRAS DE NEGÓCIO
+    # ==============================
+
     def atualizar_nivel(self, novo_nivel: str) -> None:
         self.texto_validador.validar(novo_nivel)
-        novo_nivel = novo_nivel.lower()
-        if novo_nivel not in self._valid_levels:
-            raise ValueError("Nível inválido. Use: iniciante, intermediario ou avancado")
-        self.nivel_atual = novo_nivel
+        self.nivel_validador.validar(novo_nivel)
+        self.nivel_atual = novo_nivel.lower()
 
     def nivel_como_inteiro(self) -> int:
         return self._valid_levels[self.nivel_atual]
 
-    # --------------------
-    # Serialização (mapper)
-    # --------------------
-    def to_dict(self) -> dict:
+
+# ==============================
+# MAPPER
+# ==============================
+
+class CompetenciaCandidatoMapper:
+
+    @staticmethod
+    def to_dict(competencia: CompetenciaCandidato) -> dict:
         return {
-            "id": self.id,
-            "candidato_id": self.id_candidato,
-            "competencia_id": self.id_competencia,
-            "nivel": self.nivel_como_inteiro(),
+            "id": competencia.id,
+            "candidato_id": competencia.id_candidato,
+            "competencia_id": competencia.id_competencia,
+            "nivel": competencia.nivel_como_inteiro(),
         }
 
-    @classmethod
-    def from_dict(cls, d: dict):
+    @staticmethod
+    def from_dict(d: dict) -> CompetenciaCandidato:
         mapa_inverso = {0: "iniciante", 1: "intermediario", 2: "avancado"}
-        return cls(
+        return CompetenciaCandidato(
             id=d["id"],
             id_candidato=d["candidato_id"],
             id_competencia=d["competencia_id"],
             nivel_atual=mapa_inverso[d["nivel"]],
-        )
-
-    def __str__(self) -> str:
-        return (
-            f"ID: {self.id}\n"
-            f"Candidato ID: {self.id_candidato}\n"
-            f"Competência ID: {self.id_competencia}\n"
-            f"Nível Atual: {self.nivel_atual}\n"
-            "-------------------------"
         )

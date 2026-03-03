@@ -1,9 +1,13 @@
 from dataclasses import dataclass, field
 from typing import Tuple
 
-from .validators import IdValidador, StrValidador, Validador
+from .validators import IdValidador, StrValidador, NivelMinimoValidador, BooleanValidador, Validador
 from .competencia import Nivel
 
+
+# ==============================
+# ENTIDADE DE DOMÍNIO
+# ==============================
 
 @dataclass
 class RequisitoVaga:
@@ -13,25 +17,26 @@ class RequisitoVaga:
     nivel_minimo: str
     obrigatorio: bool = True
 
-    # dependências
     id_validador: Validador = field(default_factory=IdValidador, repr=False)
     texto_validador: Validador = field(default_factory=StrValidador, repr=False)
+    nivel_validador: Validador = field(default_factory=NivelMinimoValidador, repr=False)
+    bool_validador: Validador = field(default_factory=BooleanValidador, repr=False)
 
     def __post_init__(self):
         self.id_validador.validar(self.id)
         self.id_validador.validar(self.id_vaga)
         self.id_validador.validar(self.id_competencia)
         self.texto_validador.validar(self.nivel_minimo)
-        if not isinstance(self.obrigatorio, bool):
-            raise TypeError("Obrigatório deve ser booleano")
+        self.nivel_validador.validar(self.nivel_minimo)
+        self.bool_validador.validar(self.obrigatorio)
 
-    # --------------------
-    # Métodos de domínio
-    # --------------------
+    # ==============================
+    # REGRAS DE NEGÓCIO
+    # ==============================
+
     def atualizar_nivel(self, novo_nivel: str) -> None:
         self.texto_validador.validar(novo_nivel)
-        if novo_nivel not in [nivel.name for nivel in Nivel]:
-            raise ValueError("Nível inválido.")
+        self.nivel_validador.validar(novo_nivel)
         self.nivel_minimo = novo_nivel
 
     def tornar_opcional(self) -> None:
@@ -41,24 +46,29 @@ class RequisitoVaga:
         self.obrigatorio = True
 
     def nivel_como_inteiro(self) -> int:
-        return Nivel[self.nivel_minimo].value
+        return Nivel[self.nivel_minimo.upper()].value
 
-    # --------------------
-    # Serialização (mapper)
-    # --------------------
-    def to_dict(self) -> dict:
+
+# ==============================
+# MAPPER
+# ==============================
+
+class RequisitoVagaMapper:
+
+    @staticmethod
+    def to_dict(requisito: RequisitoVaga) -> dict:
         return {
-            "id": self.id,
-            "vaga_id": self.id_vaga,
-            "competencia_id": self.id_competencia,
-            "nivel": self.nivel_como_inteiro(),
-            "obrigatorio": self.obrigatorio,
+            "id": requisito.id,
+            "vaga_id": requisito.id_vaga,
+            "competencia_id": requisito.id_competencia,
+            "nivel": requisito.nivel_como_inteiro(),
+            "obrigatorio": requisito.obrigatorio,
         }
 
-    @classmethod
-    def from_dict(cls, d: dict):
-        mapa_inverso = {0: "iniciante", 1: "intermediario", 2: "avancado"}
-        return cls(
+    @staticmethod
+    def from_dict(d: dict) -> RequisitoVaga:
+        mapa_inverso = {0: "INICIANTE", 1: "INTERMEDIARIO", 2: "AVANCADO"}
+        return RequisitoVaga(
             id=d["id"],
             id_vaga=d["vaga_id"],
             id_competencia=d["competencia_id"],

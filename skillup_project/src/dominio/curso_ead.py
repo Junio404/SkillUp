@@ -2,18 +2,22 @@ from dataclasses import dataclass, field
 from datetime import date
 from .curso_abs import Curso
 from .vaga import Modalidade
-from .validators import StrValidador, Validador
+from .validators import StrValidador, UrlValidador, Validador
 
+
+# ==============================
+# ENTIDADE DE DOMÍNIO
+# ==============================
 
 @dataclass
 class CursoEAD(Curso):
-    plataforma_url: str
-    _texto_val: Validador = field(default_factory=StrValidador, repr=False)
+    plataforma_url: str = ""
+
+    texto_validador: Validador = field(default_factory=StrValidador, repr=False)
+    url_validador: Validador = field(default_factory=UrlValidador, repr=False)
 
     def __post_init__(self):
-        if not self.plataforma_url:
-            raise ValueError("A URL da plataforma é obrigatória para cursos EAD.")
-        self._texto_val.validar(self.plataforma_url)
+        self.url_validador.validar(self.plataforma_url)
         super().__post_init__()
 
     def exibir_detalhes(self) -> str:
@@ -30,3 +34,28 @@ class CursoEAD(Curso):
         data = super().to_dict()
         data.update({"plataforma_url": self.plataforma_url, "tipo": "EAD"})
         return data
+
+
+# ==============================
+# MAPPER
+# ==============================
+
+class CursoEADMapper:
+
+    @staticmethod
+    def to_dict(curso: CursoEAD) -> dict:
+        return curso.to_dict()
+
+    @staticmethod
+    def from_dict(d: dict) -> CursoEAD:
+        return CursoEAD(
+            id=d["id"],
+            nome=d["nome"],
+            area=d["area"],
+            carga_horaria=d["carga_horaria"],
+            modalidade=Modalidade(d["modalidade"]),
+            capacidade=d["capacidade"],
+            prazo_inscricao=date.fromisoformat(d["prazo_inscricao"]) if d.get("prazo_inscricao") else None,
+            ativo=d.get("ativo", True),
+            plataforma_url=d.get("plataforma_url", ""),
+        )

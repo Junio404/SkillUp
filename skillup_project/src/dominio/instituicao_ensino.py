@@ -6,9 +6,15 @@ from .validators import (
     IdValidador,
     StrValidador,
     CnpjValidador,
+    CredenciadoValidador,
+    ModalidadesValidador,
     Validador,
 )
 
+
+# ==============================
+# ENTIDADES DE DOMÍNIO
+# ==============================
 
 @dataclass
 class InstituicaoEnsino(EntidadePublicadora):
@@ -21,10 +27,11 @@ class InstituicaoEnsino(EntidadePublicadora):
     modalidades: List[str] = field(default_factory=list)
     credenciada: bool = True
 
-    # validações
     id_validador: Validador = field(default_factory=IdValidador, repr=False)
     texto_validador: Validador = field(default_factory=StrValidador, repr=False)
     cnpj_validador: Validador = field(default_factory=CnpjValidador, repr=False)
+    credenciado_validador: Validador = field(default_factory=CredenciadoValidador, repr=False)
+    modalidades_validador: Validador = field(default_factory=ModalidadesValidador, repr=False)
 
     def __post_init__(self):
         self.id_validador.validar(self.id)
@@ -32,35 +39,47 @@ class InstituicaoEnsino(EntidadePublicadora):
         self.texto_validador.validar(self.nome_fantasia)
         self.cnpj_validador.validar(self._cnpj)
         self.texto_validador.validar(self.registro_educacional)
-        if not isinstance(self.credenciada, bool):
-            raise ValueError("Credenciada deve ser booleano")
+        self.texto_validador.validar(self.tipo)
+        self.credenciado_validador.validar(self.credenciada)
+        self.modalidades_validador.validar(self.modalidades)
 
     @property
     def cnpj(self) -> str:
         return self._cnpj
 
-    # ===== contrato abstrato =====
+    # ==============================
+    # REGRAS DE NEGÓCIO
+    # ==============================
+
     def validar_publicacao(self) -> bool:
+        """Valida se a instituição pode publicar cursos."""
         if not self.credenciada:
             raise PermissionError("Instituição não credenciada não pode publicar cursos")
         return True
 
-    # ===== serialização =====
-    def to_dict(self) -> dict:
+
+# ==============================
+# MAPPERS
+# ==============================
+
+class InstituicaoEnsinoMapper:
+
+    @staticmethod
+    def to_dict(instituicao: InstituicaoEnsino) -> dict:
         return {
-            "id": self.id,
-            "razao_social": self.razao_social,
-            "nome_fantasia": self.nome_fantasia,
-            "cnpj": self.cnpj,
-            "registro_educacional": self.registro_educacional,
-            "tipo": self.tipo,
-            "modalidades": self.modalidades,
-            "credenciada": self.credenciada,
+            "id": instituicao.id,
+            "razao_social": instituicao.razao_social,
+            "nome_fantasia": instituicao.nome_fantasia,
+            "cnpj": instituicao.cnpj,
+            "registro_educacional": instituicao.registro_educacional,
+            "tipo": instituicao.tipo,
+            "modalidades": instituicao.modalidades,
+            "credenciada": instituicao.credenciada,
         }
 
-    @classmethod
-    def from_dict(cls, d: dict):
-        return cls(
+    @staticmethod
+    def from_dict(d: dict) -> InstituicaoEnsino:
+        return InstituicaoEnsino(
             id=d["id"],
             razao_social=d.get("razao_social", d.get("nome")),
             nome_fantasia=d.get("nome_fantasia", d.get("nome")),
@@ -71,6 +90,10 @@ class InstituicaoEnsino(EntidadePublicadora):
             credenciada=d.get("credenciada", True),
         )
 
+
+# ==============================
+# ENTIDADES COMPLEMENTARES
+# ==============================
 
 @dataclass
 class AreaEnsino:
@@ -85,6 +108,23 @@ class AreaEnsino:
         self.texto_validador.validar(self.nome_area)
 
 
+class AreaEnsinoMapper:
+
+    @staticmethod
+    def to_dict(area: AreaEnsino) -> dict:
+        return {
+            "id_area": area.id_area,
+            "nome_area": area.nome_area,
+        }
+
+    @staticmethod
+    def from_dict(d: dict) -> AreaEnsino:
+        return AreaEnsino(
+            id_area=d["id_area"],
+            nome_area=d["nome_area"],
+        )
+
+
 @dataclass
 class InstituicaoAreaEnsino:
     id_instituicao_area: int
@@ -97,3 +137,22 @@ class InstituicaoAreaEnsino:
         self.id_validador.validar(self.id_instituicao_area)
         self.id_validador.validar(self.id_instituicao)
         self.id_validador.validar(self.id_area)
+
+
+class InstituicaoAreaEnsinoMapper:
+
+    @staticmethod
+    def to_dict(inst_area: InstituicaoAreaEnsino) -> dict:
+        return {
+            "id_instituicao_area": inst_area.id_instituicao_area,
+            "id_instituicao": inst_area.id_instituicao,
+            "id_area": inst_area.id_area,
+        }
+
+    @staticmethod
+    def from_dict(d: dict) -> InstituicaoAreaEnsino:
+        return InstituicaoAreaEnsino(
+            id_instituicao_area=d["id_instituicao_area"],
+            id_instituicao=d["id_instituicao"],
+            id_area=d["id_area"],
+        )
