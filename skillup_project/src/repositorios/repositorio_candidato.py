@@ -1,5 +1,5 @@
 import os
-from src.dominio.candidato import Candidato
+from src.dominio.candidato import Candidato, CandidatoMapper
 from src.interfaces.interface_candidato import ICandidatoRepositorio
 from src.repositorios.loader import JsonRepository
 
@@ -17,19 +17,19 @@ class RepositorioCandidatoJSON(ICandidatoRepositorio):
 
     def salvar(self, candidato: Candidato):
         dados = self._json_repo.carregar()
-        dados.append(candidato.to_dict())
+        dados.append(CandidatoMapper.to_dict(candidato))
         self._json_repo.salvar(dados)
 
     def listar(self):
         dados = self._json_repo.carregar()
-        return [Candidato.from_dict(d) for d in dados]
+        return [CandidatoMapper.from_dict(d) for d in dados]
 
     def buscar_por_id(self, id_candidato: int):
         dados = self._json_repo.carregar()
 
         for c in dados:
             if c["id"] == id_candidato:
-                return Candidato.from_dict(c)
+                return CandidatoMapper.from_dict(c)
 
         return None
 
@@ -46,7 +46,7 @@ class RepositorioCandidatoJSON(ICandidatoRepositorio):
 
                 atributo = getattr(candidato, campo)
 
-                if isinstance(atributo, list):
+                if isinstance(atributo, (list, tuple)):
                     if valor not in atributo:
                         corresponde = False
                         break
@@ -65,7 +65,7 @@ class RepositorioCandidatoJSON(ICandidatoRepositorio):
 
         for i, c in enumerate(dados):
             if c["id"] == candidato.id:
-                dados[i] = candidato.to_dict()
+                dados[i] = CandidatoMapper.to_dict(candidato)
                 self._json_repo.salvar(dados)
                 return
 
@@ -79,3 +79,45 @@ class RepositorioCandidatoJSON(ICandidatoRepositorio):
 
         dados = [c for c in dados if c["id"] != id_candidato]
         self._json_repo.salvar(dados)
+
+    def buscar_por_cpf(self, cpf: str):
+        dados = self._json_repo.carregar()
+
+        for c in dados:
+            if c["cpf"] == cpf:
+                return CandidatoMapper.from_dict(c)
+
+        return None
+
+    def buscar_por_email(self, email: str):
+        dados = self._json_repo.carregar()
+
+        for c in dados:
+            if c["email"] == email:
+                return CandidatoMapper.from_dict(c)
+
+        return None
+
+    def buscar_por_area_interesse(self, area: str):
+        candidatos = self.listar()
+        resultado = []
+
+        for candidato in candidatos:
+            if area in candidato.areas_interesse:
+                resultado.append(candidato)
+
+        return resultado
+
+    def buscar_por_nivel_formacao(self, nivel: str):
+        candidatos = self.listar()
+        resultado = []
+
+        for candidato in candidatos:
+            if candidato.nivel_formacao == nivel:
+                resultado.append(candidato)
+
+        return resultado
+
+    def contar_total(self) -> int:
+        dados = self._json_repo.carregar()
+        return len(dados)

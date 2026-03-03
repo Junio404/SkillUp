@@ -1,112 +1,80 @@
-from entidade_publicadora import EntidadePublicadora
+from dataclasses import dataclass, field
+from typing import Protocol
 
-class Empresa(EntidadePublicadora):
-    def __init__(self, id_empresa, nome, cnpj, porte):
-        super().__init__(id_empresa, nome, cnpj)
-        self.porte = porte  # Ex: pequeno, medio, grande
-    
+from .validators import (
+    IdValidador,
+    StrValidador,
+    CnpjValidador,
+    PorteValidador,
+    Validador,
+)
 
-    # --------------------
-    #     Properties
-    # --------------------
+
+# ==============================
+# VALIDATORS
+# ==============================
+
+# (Utilizando os validators já definidos em validators.py)
+
+
+# ==============================
+# ENTIDADE DE DOMÍNIO
+# ==============================
+
+@dataclass
+class Empresa:
+    id: int
+    nome: str
+    _cnpj: str = field(repr=False)
+    porte: str
+
+    id_validador: Validador = field(default_factory=IdValidador, repr=False)
+    nome_validador: Validador = field(default_factory=StrValidador, repr=False)
+    cnpj_validador: Validador = field(default_factory=CnpjValidador, repr=False)
+    porte_validador: Validador = field(default_factory=PorteValidador, repr=False)
+
+    def __post_init__(self):
+        self.id_validador.validar(self.id)
+        self.nome_validador.validar(self.nome)
+        self.cnpj_validador.validar(self._cnpj)
+        self.porte_validador.validar(self.porte)
 
     @property
-    def id(self):
-        """Retorna ID."""
-        return self._id
-
-    @property
-    def nome(self):
-        """Retorna nome."""
-        return self._nome
-
-    @nome.setter
-    def nome(self, valor):
-        """Define nome."""
-        self._validar_nome(valor)
-        self._nome = valor
-
-    @property
-    def cnpj(self):
-        """Retorna CNPJ."""
+    def cnpj(self) -> str:
         return self._cnpj
 
-    @cnpj.setter
-    def cnpj(self, valor):
-        """Define CNPJ (imutável)."""
-        if hasattr(self, "_cnpj"):
-            raise ValueError("CNPJ não pode ser alterado")
+    # ==============================
+    # REGRAS DE NEGÓCIO
+    # ==============================
 
-        self._validar_cnpj(valor)
-        self._cnpj = valor
-
-    @property
-    def porte(self):
-        """Retorna porte da empresa."""
-        return self._porte
-
-    @porte.setter
-    def porte(self, valor):
-        """Define porte."""
-        if valor not in ["pequeno", "medio", "grande"]:
-            raise ValueError("Porte deve ser: pequeno, medio ou grande")
-        self._porte = valor
-
-    #--------------------
-    #     Métodos de Domínio
-    #--------------------
-
-    def validar_publicacao(self, oportunidade):
-        """
-        Empresa pode publicar Vagas de Emprego e Cursos Empresariais.
-        Regras trabalhistas e de vínculo serão validadas na oportunidade.
-        """
+    def validar_publicacao(self, oportunidade) -> bool:
         return True
 
-    def obter_limites_publicacao(self):
-        """
-        Limites podem variar conforme o porte da empresa.
-        """
-        if self.porte == "pequeno":
-            return 5
-        elif self.porte == "medio":
-            return 15
-        elif self.porte == "grande":
-            return 50
-        return 0
+    def obter_limites_publicacao(self) -> int:
+        limites = {"pequeno": 5, "medio": 15, "grande": 50}
+        return limites.get(self.porte, 0)
 
-    def _str_(self):
-        return f"Empresa: {self.nome} ({self.porte})"
-    
-    # --------------------
-    # Serialização
-    # --------------------
 
-    def to_dict(self):
-        """Converte a empresa para dicionário (para persistência)."""
+# ==============================
+# MAPPER
+# ==============================
+
+class EmpresaMapper:
+
+    @staticmethod
+    def to_dict(empresa: Empresa) -> dict:
         return {
-            "id": self.id,
-            "nome": self.nome,
-            "cnpj": self.cnpj,
-            "porte": self.porte,
+            "id": empresa.id,
+            "nome": empresa.nome,
+            "cnpj": empresa.cnpj,
+            "porte": empresa.porte,
         }
 
-    @classmethod
-    def from_dict(cls, dados: dict):
-        """Cria uma empresa a partir de um dicionário."""
-        return cls(
-            id_empresa=dados["id"],
+    @staticmethod
+    def from_dict(dados: dict) -> Empresa:
+        return Empresa(
+            id=dados["id"],
             nome=dados["nome"],
-            cnpj=dados["cnpj"],
+            _cnpj=dados["cnpj"],
             porte=dados["porte"],
         )
-    
-    def __str__(self):
-        """Representação textual."""
-        return (
-        f"ID: {self.id}\n"
-        f"Nome: {self.nome}\n"
-        f"CNPJ: {self.cnpj}\n"
-        f"Porte: {self.porte}\n"
-        "-------------------------"
-    )

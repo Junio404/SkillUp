@@ -1,35 +1,31 @@
+from __future__ import annotations
+
 from abc import ABC, abstractmethod
+from dataclasses import dataclass, field
 
+from .validators import IdValidador, StrValidador, CnpjValidador, Validador
+
+
+@dataclass
 class EntidadePublicadora(ABC):
-    def __init__(self, id_entidade: int, nome: str, cnpj: str):
-        self._id = id_entidade
-        self.nome = nome
-        self.cnpj = cnpj
+    id: int
+    nome: str
+    _cnpj: str = field(repr=False)
+
+    id_validador: Validador = field(default_factory=IdValidador, repr=False)
+    nome_validador: Validador = field(default_factory=StrValidador, repr=False)
+    cnpj_validador: Validador = field(default_factory=CnpjValidador, repr=False)
+
+    def __post_init__(self):
+        self.id_validador.validar(self.id)
+        self.nome_validador.validar(self.nome)
+        self.cnpj_validador.validar(self._cnpj)
 
     @property
-    def id(self):
-        return self._id
-
-    @property
-    def nome(self):
-        return self._nome
-
-    @nome.setter
-    def nome(self, valor):
-        if not valor:
-            raise ValueError("Nome é obrigatório")
-        self._nome = valor
-
-    @property
-    def cnpj(self):
+    def cnpj(self) -> str:
         return self._cnpj
-
-    @cnpj.setter
-    def cnpj(self, valor):
-        if not valor or len(valor) != 14:
-            raise ValueError("CNPJ inválido")
-        self._cnpj = valor
 
     @abstractmethod
     def validar_publicacao(self):
-        pass
+        ...
+
