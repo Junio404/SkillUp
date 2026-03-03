@@ -126,6 +126,22 @@ class Candidato:
             raise ValueError("Ao menos uma área é obrigatória.")
         self._areas_interesse.remove(area)
 
+    def atualizar_dado(self, campo: str, novo_valor) -> None:
+        """Atualiza um campo específico do candidato com validação"""
+        if campo == "nome":
+            self.nome_validador.validar(novo_valor)
+            self.nome = novo_valor
+        elif campo == "email":
+            self.email_validador.validar(novo_valor)
+            self.email = novo_valor
+        elif campo == "nivel_formacao":
+            self.nivel_validador.validar(novo_valor)
+            self.nivel_formacao = novo_valor
+        elif campo == "curriculo":
+            self.curriculo = novo_valor
+        else:
+            raise ValueError(f"Campo '{campo}' não pode ser atualizado.")
+
 
 # ==============================
 # MAPPER (Responsabilidade isolada)
