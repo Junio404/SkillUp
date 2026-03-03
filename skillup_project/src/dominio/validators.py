@@ -274,11 +274,15 @@ class ModalidadesValidador:
 
 # --- Prazo ---
 class PrazoValidador:
-    """Valida prazos em formato ISO ou None."""
+    """Valida prazos no futuro."""
     
-    def validar(self, valor: str | None) -> None:
-        if valor is not None and not isinstance(valor, str):
-            raise TypeError("Prazo deve ser string no formato ISO ou None.")
+    def validar(self, valor: date | None) -> None:
+        if valor is None:
+            return
+
+        if not isinstance(valor, date):
+            raise TypeError("Prazo deve ser um objeto date ou None.")
+
         if valor < date.today():
             raise ValueError("Prazo de inscrição não pode ser no passado.")
 
