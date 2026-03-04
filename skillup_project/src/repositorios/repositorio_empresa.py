@@ -1,10 +1,8 @@
-import json
 import os
-
-from src.dominio.empresa import Empresa
-from src.interfaces.interface_empresa import IEmpresaRepositorio  # ajuste se o nome for diferente
+from typing import List, Optional
+from src.dominio.empresa import Empresa, EmpresaMapper
+from src.interfaces.interface_empresa import IEmpresa
 from src.repositorios.loader import JsonRepository
-
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 CAMINHO_ARQUIVO = os.path.normpath(
@@ -12,64 +10,47 @@ CAMINHO_ARQUIVO = os.path.normpath(
 )
 
 
-class RepositorioEmpresaJSON(IEmpresaRepositorio):
-    """
-    Repositório de empresas que utiliza um arquivo JSON para armazenar os dados.
-    Implementa os métodos definidos na interface IEmpresaRepositorio.
-    """
+class RepositorioEmpresaJSON(IEmpresa):
+    def __init__(self):
+        self._json_repo = JsonRepository(CAMINHO_ARQUIVO)
 
-    def _carregar_dados(self):
-        """Carrega os dados do arquivo JSON. Retorna uma lista de dicionários representando as empresas."""
-        if not os.path.exists(CAMINHO_ARQUIVO):
-            return []
+    def salvar(self, empresa: Empresa) -> None:
+        dados = self._json_repo.carregar()
+        dados.append(EmpresaMapper.to_dict(empresa))
+        self._json_repo.salvar(dados)
 
-        try:
-            with open(CAMINHO_ARQUIVO, "r", encoding="utf-8") as f:
-                return json.load(f)
-        except json.JSONDecodeError:
-            return []
+    def listar(self) -> List[Empresa]:
+        dados = self._json_repo.carregar()
+        return [EmpresaMapper.from_dict(d) for d in dados]
 
-    def _salvar_dados(self, lista):
-        """Salva a lista de empresas no arquivo JSON."""
-        os.makedirs(os.path.dirname(CAMINHO_ARQUIVO), exist_ok=True)
-        with open(CAMINHO_ARQUIVO, "w", encoding="utf-8") as f:
-            json.dump(lista, f, indent=4, ensure_ascii=False)
-
-    def salvar(self, empresa: Empresa):
-        """Salva uma empresa no arquivo JSON."""
-        dados = self._carregar_dados()
-        dados.append(empresa.to_dict())
-        self._salvar_dados(dados)
-
-    def listar(self):
-        """Lista todas as empresas armazenadas no arquivo JSON."""
-        dados = self._carregar_dados()
-        return [Empresa.from_dict(d) for d in dados]
-
-    def buscar_por_id(self, id_empresa: int):
-        """Busca uma empresa pelo ID. Retorna Empresa ou None."""
-        for empresa in self.listar():
-            if empresa.id == id_empresa:
-                return empresa
+    def buscar_por_id(self, id_empresa: int) -> Optional[Empresa]:
+        dados = self._json_repo.carregar()
+        for e in dados:
+            if e["id"] == id_empresa:
+                return EmpresaMapper.from_dict(e)
         return None
 
-    def buscar_por_filtros(self, **filtros):
-        """
-        Busca empresas que correspondam aos filtros fornecidos.
-        Os filtros podem incluir qualquer atributo de Empresa (ex: nome, cnpj, porte).
-        """
+    def buscar_por_cnpj(self, cnpj: str) -> Optional[Empresa]:
+        for e in self.listar():
+            if e.cnpj == cnpj:
+                return e
+        return None
+
+    def buscar_por_nome(self, nome: str) -> List[Empresa]:
+        return [e for e in self.listar() if nome.lower() in e.nome.lower()]
+
+    def buscar_por_porte(self, porte: str) -> List[Empresa]:
+        return [e for e in self.listar() if e.porte.lower() == porte.lower()]
+
+    def buscar_por_filtros(self, **filtros) -> List[Empresa]:
         empresas = self.listar()
         resultado = []
-
         for empresa in empresas:
             corresponde = True
-
             for campo, valor in filtros.items():
                 if not hasattr(empresa, campo):
                     raise AttributeError(f"O campo '{campo}' não existe na empresa")
-
                 atributo = getattr(empresa, campo)
-
                 if isinstance(atributo, list):
                     if valor not in atributo:
                         corresponde = False
@@ -78,33 +59,28 @@ class RepositorioEmpresaJSON(IEmpresaRepositorio):
                     if atributo != valor:
                         corresponde = False
                         break
-
             if corresponde:
                 resultado.append(empresa)
-
         return resultado
 
-    def atualizar(self, empresa: Empresa):
-        """
-        Atualiza uma empresa existente no arquivo JSON.
-        A empresa é identificada pelo ID.
-        """
-        dados = self._carregar_dados()
-
+    def atualizar(self, empresa: Empresa) -> None:
+        dados = self._json_repo.carregar()
         for i, e in enumerate(dados):
             if e["id"] == empresa.id:
-                dados[i] = empresa.to_dict()
-                self._salvar_dados(dados)
+                dados[i] = EmpresaMapper.to_dict(empresa)
+                self._json_repo.salvar(dados)
                 return
-
         raise ValueError("Empresa não encontrada")
 
-    def deletar(self, id_empresa: int):
-        """Deleta uma empresa do arquivo JSON pelo ID."""
-        dados = self._carregar_dados()
-
+    def deletar(self, id_empresa: int) -> None:
+        dados = self._json_repo.carregar()
         if not any(e["id"] == id_empresa for e in dados):
             raise ValueError("Empresa não encontrada")
-
         dados = [e for e in dados if e["id"] != id_empresa]
-        self._salvar_dados(dados)
+        self._json_repo.salvar(dados)
+
+    def contar_total(self) -> int:
+        return len(self.listar())
+
+    def contar_por_porte(self, porte: str) -> int:
+        return len(self.buscar_por_porte(porte))
