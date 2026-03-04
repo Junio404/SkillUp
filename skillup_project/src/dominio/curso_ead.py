@@ -1,4 +1,8 @@
-from skillup_project.src.dominio.curso_abs import Curso 
+from dataclasses import dataclass, field
+from datetime import date
+from .curso_abs import Curso
+from .vaga import Modalidade
+from .validators import StrValidador, UrlValidador, Validador
 
 
 # ==============================
