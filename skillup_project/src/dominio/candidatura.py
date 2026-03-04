@@ -1,164 +1,99 @@
+from dataclasses import dataclass, field
 from datetime import datetime
 from enum import Enum
+from typing import Protocol
+
+from .validators import IdValidador, StatusCandidaturaValidador, DataValidador, PrazoValidador, Validador
+
+
+# ==============================
+# ENUMS
+# ==============================
 
 class StatusCandidatura(Enum):
-    """Enumeração para os status possíveis de uma candidatura."""
     ENVIADO = "Enviado"
     EM_ANALISE = "Em analise"
     ACEITO = "Aceito"
     RECUSADO = "Recusado"
     CANCELADO = "Cancelado"
 
+
+# ==============================
+# ENTIDADE DE DOMÍNIO
+# ==============================
+
+@dataclass
 class Candidatura:
-    """
-    Entidade de domínio que representa o vínculo entre um Candidato e uma Vaga.
-    """
+    id: int
+    id_vaga: int
+    id_candidato: int
+    status: StatusCandidatura = StatusCandidatura.ENVIADO
+    data_candidatura: str | None = None
 
-    def __init__(
-        self,
-        id_candidatura: int,
-        id_vaga: int,
-        id_candidato: int,
-        status: StatusCandidatura = StatusCandidatura.ENVIADO,
-        data_candidatura: str = None
-    ):
-        """
-        Cria uma nova candidatura.
+    id_validador: Validador = field(default_factory=IdValidador, repr=False)
+    status_validador: Validador = field(default_factory=StatusCandidaturaValidador, repr=False)
+    data_validador: Validador = field(default_factory=DataValidador, repr=False)
+    prazo_validador: Validador = field(default_factory=PrazoValidador, repr=False)
 
-        param id_candidatura: Identificador único da candidatura
-        param id_vaga: ID da vaga sendo pleiteada
-        param id_candidato: ID do candidato
-        param status: Status atual
-        param data_candidatura: Data de criação
-        """
-
-        self._validar_id(id_candidatura, "ID Candidatura")
-        self._validar_id(id_vaga, "ID Vaga")
-        self._validar_id(id_candidato, "ID Candidato")
-
-        self._id_candidatura = id_candidatura
-        self._id_vaga = id_vaga
-        self._id_candidato = id_candidato
+    def __post_init__(self):
+        self.id_validador.validar(self.id)
+        self.id_validador.validar(self.id_vaga)
+        self.id_validador.validar(self.id_candidato)
         
-        # Define a data atual se nenhuma for passada
-        if not data_candidatura:
-            self._data_candidatura = datetime.now().date().isoformat()
-        else:
-            self._data_candidatura = data_candidatura
-
-        # Garante que status seja do tipo Enum
-        if isinstance(status, str):
+        if not self.data_candidatura:
+            self.data_candidatura = datetime.now().date().isoformat()
+        self.data_validador.validar(self.data_candidatura)
+        self.prazo_validador.validar(self.data_candidatura)
+        
+        if isinstance(self.status, str):
             try:
-                self._status = StatusCandidatura(status)
+                self.status = StatusCandidatura(self.status)
             except ValueError:
-                self._status = StatusCandidatura.ENVIADO
-        else:
-            self._status = status
-
-    # --------------------
-    #     Validações
-    # --------------------
-
-    def _validar_id(self, valor, nome_campo):
-        """Valida se o ID é um inteiro positivo."""
-        if not isinstance(valor, int) or valor <= 0:
-            raise ValueError(f"{nome_campo} deve ser um inteiro positivo.")
-
-    # --------------------
-    #     Properties
-    # --------------------
-    """
-    Retorna o ID da candidatura.
-    Retorna o ID da vaga associada.
-    Retorna o ID do candidato associado.
-    Retorna a data da candidatura.
-    Retorna o status atual da candidatura.
-    """
-    @property
-    def id(self):
-        return self._id_candidatura
-
-    @property
-    def id_vaga(self):
-        return self._id_vaga
-
-    @property
-    def id_candidato(self):
-        return self._id_candidato
-
-    @property
-    def data_candidatura(self):
-        return self._data_candidatura
-
-    @property
-    def status(self):
+                self.status = StatusCandidatura.ENVIADO
         
-        return self._status
+        self.status_validador.validar(self.status.value)
 
-    @status.setter
-    def status(self, novo_status):
-    
-        if not isinstance(novo_status, StatusCandidatura):
-            raise TypeError("O status deve ser do tipo StatusCandidatura.")
-        self._status = novo_status
+    # ==============================
+    # REGRAS DE NEGÓCIO
+    # ==============================
 
-    # --------------------
-    #     Métodos de Domínio
-    # --------------------
-    """
-    Aprova a candidatura, alterando seu status para "Aceito".
-    Reprova a candidatura, alterando seu status para "Recusado".
-    """
-    def aprovar(self):
-        
+    def aprovar(self) -> None:
         self.status = StatusCandidatura.ACEITO
 
-    def reprovar(self):
-        
+    def reprovar(self) -> None:
         self.status = StatusCandidatura.RECUSADO
 
-    def cancelar(self):
-        """Atualiza o status para Cancelado (pelo candidato)."""
-        if self.status in [StatusCandidatura.ACEITO, StatusCandidatura.RECUSADO]:
+    def cancelar(self) -> None:
+        if self.status in (StatusCandidatura.ACEITO, StatusCandidatura.RECUSADO):
             raise ValueError("Não é possível cancelar uma candidatura já finalizada.")
         self.status = StatusCandidatura.CANCELADO
 
-    def analisar(self):
-        """Atualiza o status para Em Análise."""
+    def analisar(self) -> None:
         self.status = StatusCandidatura.EM_ANALISE
 
-    # --------------------
-    #     Serialização
-    # --------------------
 
-    def to_dict(self):
-        """Converte o objeto para dicionário (JSON)."""
+# ==============================
+# MAPPER
+# ==============================
+
+class CandidaturaMapper:
+
+    @staticmethod
+    def to_dict(candidatura: Candidatura) -> dict:
         return {
-            "id_candidatura": self.id,
-            "id_vaga": self.id_vaga,
-            "id_candidato": self.id_candidato,
-            "status": self.status.value,
-            "data_candidatura": self.data_candidatura
+            "id_candidatura": candidatura.id,
+            "id_vaga": candidatura.id_vaga,
+            "id_candidato": candidatura.id_candidato,
+            "status": candidatura.status.value,
+            "data_candidatura": candidatura.data_candidatura,
         }
 
     @staticmethod
-    def from_dict(d):
-        """Cria uma instância de Candidatura a partir de um dicionário."""
+    def from_dict(d: dict) -> Candidatura:
         return Candidatura(
-            id_candidatura=d["id_candidatura"],
+            id=d["id_candidatura"],
             id_vaga=d["id_vaga"],
             id_candidato=d["id_candidato"],
-            status=StatusCandidatura(d.get("status", "Enviado")),
-            data_candidatura=d.get("data_candidatura")
-        )
-
-    def __str__(self):
-        """Representação textual da candidatura."""
-        return (
-            f"Candidatura #{self.id}\n"
-            f"Vaga ID: {self.id_vaga}\n"
-            f"Candidato ID: {self.id_candidato}\n"
-            f"Data: {self.data_candidatura}\n"
-            f"Status: {self.status.value}\n"
-            "-------------------------"
+            status=StatusCandidatura(d.get("status", StatusCandidatura.ENVIADO.value)),
+            data_candidatura=d.get("data_candidatura"),
         )

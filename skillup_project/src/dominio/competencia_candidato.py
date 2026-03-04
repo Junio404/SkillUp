@@ -1,125 +1,72 @@
-class CompetenciaCandidato:
-    """Entidade de domínio que representa o nível de uma competência de um candidato."""
+from dataclasses import dataclass, field
+from typing import Dict
 
-    NIVEIS_VALIDOS = {
+from .validators import IdValidador, StrValidador, NivelAtualizavelValidador, Validador
+
+
+# ==============================
+# ENTIDADE DE DOMÍNIO
+# ==============================
+
+@dataclass
+class CompetenciaCandidato:
+    id: int
+    id_candidato: int
+    id_competencia: int
+    nivel_atual: str
+
+    _valid_levels: Dict[str, int] = field(init=False, repr=False, default_factory=lambda: {
         "iniciante": 0,
         "intermediario": 1,
-        "avancado": 2
-    }
+        "avancado": 2,
+    })
 
-    def __init__(
-        self,
-        id: int,
-        id_candidato: int,
-        id_competencia: int,
-        nivel_atual: str
-    ):
-        """
-        Cria relação entre Candidato e Competência.
+    id_validador: Validador = field(default_factory=IdValidador, repr=False)
+    texto_validador: Validador = field(default_factory=StrValidador, repr=False)
+    nivel_validador: Validador = field(default_factory=NivelAtualizavelValidador, repr=False)
 
-        :param id: Inteiro positivo (PK)
-        :param id_candidato: FK do candidato;
-        :param id_competencoa: FK da competência
-        param nivel_atual: iniciante | intermediario | avancado
-        """
+    def __post_init__(self):
+        self.id_validador.validar(self.id)
+        self.id_validador.validar(self.id_candidato)
+        self.id_validador.validar(self.id_competencia)
+        self.texto_validador.validar(self.nivel_atual)
+        self.nivel_validador.validar(self.nivel_atual)
+        self.nivel_atual = self.nivel_atual.lower()
 
-        self._validar_id(id)
-        self._id = id
+    # ==============================
+    # REGRAS DE NEGÓCIO
+    # ==============================
 
-        self._validar_id(id_candidato)
-        self._id_candidato = id_candidato
+    def atualizar_nivel(self, novo_nivel: str) -> None:
+        self.texto_validador.validar(novo_nivel)
+        self.nivel_validador.validar(novo_nivel)
+        self.nivel_atual = novo_nivel.lower()
 
-        self._validar_id(id_competencia)
-        self._id_competencia = id_competencia
+    def nivel_como_inteiro(self) -> int:
+        return self._valid_levels[self.nivel_atual]
 
-        self.nivel_atual = nivel_atual
 
-    # --------------------
-    #     Validações
-    # --------------------
+# ==============================
+# MAPPER
+# ==============================
 
-    def _validar_id(self, valor):
-        if not isinstance(valor, int) or valor <= 0:
-            raise ValueError("ID deve ser inteiro positivo")
+class CompetenciaCandidatoMapper:
 
-    def _validar_nivel(self, valor):
-        if not isinstance(valor, str):
-            raise TypeError("Nível deve ser string")
-
-        if valor.lower() not in self.NIVEIS_VALIDOS:
-            raise ValueError(
-                "Nível inválido. Use: iniciante, intermediario ou avancado"
-            )
-
-    # --------------------
-    #     Properties
-    # --------------------
-
-    @property
-    def id(self):
-        return self._id
-
-    @property
-    def id_candidato(self):
-        return self._id_candidato
-
-    @property
-    def id_competencia(self):
-        return self._id_competencia
-
-    @property
-    def nivel_atual(self):
-        return self._nivel_atual
-
-    @nivel_atual.setter
-    def nivel_atual(self, valor):
-        self._validar_nivel(valor)
-        self._nivel_atual = valor.lower()
-
-    # --------------------
-    #     Métodos de Domínio
-    # --------------------
-
-    def atualizar_nivel(self, novo_nivel: str):
-        """Atualiza o nível atual da competência."""
-        self.nivel_atual = novo_nivel
-
-    def nivel_como_inteiro(self):
-        """Retorna nível como inteiro (0,1,2) para persistência."""
-        return self.NIVEIS_VALIDOS[self._nivel_atual]
-
-    # --------------------
-    #     Serialização
-    # --------------------
-
-    def to_dict(self):
+    @staticmethod
+    def to_dict(competencia: CompetenciaCandidato) -> dict:
         return {
-            "id": self.id,
-            "candidato_id": self.id_candidato,
-            "competencia_id": self.id_competencia,
-            "nivel": self.nivel_como_inteiro()
+            "id": competencia.id,
+            "candidato_id": competencia.id_candidato,
+            "competencia_id": competencia.id_competencia,
+            "nivel": competencia.nivel_como_inteiro(),
         }
 
     @staticmethod
-    def from_dict(d):
-        mapa_inverso = {
-            0: "iniciante",
-            1: "intermediario",
-            2: "avancado"
-        }
-
+    def from_dict(d: dict) -> CompetenciaCandidato:
+        mapa_inverso = {0: "iniciante", 1: "intermediario", 2: "avancado"}
         return CompetenciaCandidato(
             id=d["id"],
             id_candidato=d["candidato_id"],
             id_competencia=d["competencia_id"],
-            nivel_atual=mapa_inverso[d["nivel"]]
-        )
-
-    def __str__(self):
-        return (
-            f"ID: {self.id}\n"
-            f"Candidato ID: {self.id_candidato}\n"
-            f"Competência ID: {self.id_competencia}\n"
-            f"Nível Atual: {self.nivel_atual}\n"
-            "-------------------------"
+            nivel_atual=mapa_inverso[d["nivel"]],
         )
