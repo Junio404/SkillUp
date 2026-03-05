@@ -1,4 +1,5 @@
 from dataclasses import dataclass, field
+from enum import IntEnum
 from typing import List, Tuple
 
 from src.dominio.candidato import Candidato
@@ -13,10 +14,12 @@ from src.interfaces.interface_curso import ICursoRepositorio
 # PESOS DE PONTUAÇÃO
 # ==============================
 
-PESO_AREA = 50           # área de interesse coincide
-PESO_LOCALIDADE = 30     # localidade coincide (presencial/híbrido)
-PESO_REMOTO = 20         # bônus por ser remoto (máxima flexibilidade)
-PESO_HIBRIDO = 10        # bônus menor por ser híbrido
+class PesoRecomendacao(IntEnum):
+    """Pesos utilizados no cálculo de pontuação das recomendações."""
+    AREA = 50              # área de interesse coincide
+    LOCALIDADE = 30        # localidade coincide (presencial/híbrido)
+    REMOTO = 20            # bônus por ser remoto (máxima flexibilidade)
+    HIBRIDO = 10           # bônus menor por ser híbrido
 
 
 # ==============================
@@ -95,7 +98,7 @@ class RecomendacaoService:
             if vaga.area.lower() not in areas_lower:
                 continue
 
-            pontuacao += PESO_AREA
+            pontuacao += PesoRecomendacao.AREA
 
             # 2. Localidade: presencial/híbrido exige match
             localidade_vaga = getattr(vaga, "localidade", "")
@@ -131,7 +134,7 @@ class RecomendacaoService:
             if curso.area.lower() not in areas_lower:
                 continue
 
-            pontuacao += PESO_AREA
+            pontuacao += PesoRecomendacao.AREA
 
             # 2. Localidade: presencial/híbrido exige match
             localidade_curso = ""
@@ -166,23 +169,23 @@ class RecomendacaoService:
     ) -> int:
         """Calcula pontos extras com base em modalidade e localidade.
 
-        - REMOTO: +PESO_REMOTO (flexibilidade total).
-        - PRESENCIAL com localidade coincidente: +PESO_LOCALIDADE.
-        - HÍBRIDO com localidade coincidente: +PESO_LOCALIDADE + PESO_HIBRIDO.
+        - REMOTO: +PesoRecomendacao.REMOTO (flexibilidade total).
+        - PRESENCIAL com localidade coincidente: +PesoRecomendacao.LOCALIDADE.
+        - HÍBRIDO com localidade coincidente: +PesoRecomendacao.LOCALIDADE + PesoRecomendacao.HIBRIDO.
         """
         pontos = 0
 
         if modalidade == Modalidade.REMOTO:
-            pontos += PESO_REMOTO
+            pontos += PesoRecomendacao.REMOTO
             return pontos
 
         # Presencial ou Híbrido — verificar localidade
         if localidade_item and localidade_candidato:
             if localidade_item.strip().lower() == localidade_candidato.strip().lower():
-                pontos += PESO_LOCALIDADE
+                pontos += PesoRecomendacao.LOCALIDADE
 
         if modalidade == Modalidade.HIBRIDO:
-            pontos += PESO_HIBRIDO
+            pontos += PesoRecomendacao.HIBRIDO
 
         return pontos
 
