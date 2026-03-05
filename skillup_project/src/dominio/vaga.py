@@ -117,6 +117,7 @@ class Vaga(ABC):
 @dataclass
 class VagaCLT(Vaga):
     salario_base: float = 0.0
+    localidade: str = ""
 
     salario_validador: Validador = field(default_factory=SalarioValidador, repr=False)
 
@@ -124,6 +125,9 @@ class VagaCLT(Vaga):
         super().__post_init__()
         if self.salario_base > 0:
             self.salario_validador.validar(self.salario_base)
+        if not isinstance(self.localidade, str):
+            raise TypeError("Localidade deve ser uma string.")
+        self.localidade = self.localidade.strip()
 
     def calcular_custo_contratacao(self) -> float:
         return self.salario_base * 1.8
@@ -131,6 +135,7 @@ class VagaCLT(Vaga):
     def to_dict(self) -> dict:
         data = super().to_dict()
         data["salario_base"] = self.salario_base
+        data["localidade"] = self.localidade
         data["tipo_vaga"] = "CLT"
         return data
 
@@ -139,6 +144,7 @@ class VagaCLT(Vaga):
 class VagaEstagio(Vaga):
     bolsa_auxilio: float = 0.0
     instituicao_conveniada: str = ""
+    localidade: str = ""
 
     bolsa_validador: Validador = field(default_factory=SalarioValidador, repr=False)
 
@@ -147,6 +153,9 @@ class VagaEstagio(Vaga):
         if self.bolsa_auxilio > 0:
             self.bolsa_validador.validar(self.bolsa_auxilio)
         self.texto_validador.validar(self.instituicao_conveniada)
+        if not isinstance(self.localidade, str):
+            raise TypeError("Localidade deve ser uma string.")
+        self.localidade = self.localidade.strip()
 
     def calcular_custo_contratacao(self) -> float:
         return self.bolsa_auxilio * 1.1
@@ -155,6 +164,7 @@ class VagaEstagio(Vaga):
         data = super().to_dict()
         data["bolsa_auxilio"] = self.bolsa_auxilio
         data["instituicao_conveniada"] = self.instituicao_conveniada
+        data["localidade"] = self.localidade
         data["tipo_vaga"] = "ESTAGIO"
         return data
 
@@ -182,6 +192,7 @@ class VagaCLTMapper:
             requisitos=d.get("requisitos", []),
             ativa=d.get("ativa", True),
             salario_base=d.get("salario_base", 0.0),
+            localidade=d.get("localidade", "")
         )
 
 
@@ -205,4 +216,5 @@ class VagaEstagioMapper:
             ativa=d.get("ativa", True),
             bolsa_auxilio=d.get("bolsa_auxilio", 0.0),
             instituicao_conveniada=d.get("instituicao_conveniada", ""),
+            localidade=d.get("localidade", "")
         )

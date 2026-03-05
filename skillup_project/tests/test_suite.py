@@ -49,14 +49,16 @@ class TestSkillUpSuite(unittest.TestCase):
         vaga_clt = VagaCLT(
             id=1, titulo="Dev Jr", descricao="Python", area="TI",
             modalidade=Modalidade.REMOTO, tipo=TipoVaga.EMPREGO,
-            salario_base=5000.0, prazo_inscricao=self.future_date
+            salario_base=5000.0, prazo_inscricao=self.future_date,
+            localidade="São Paulo"
         )
         
         vaga_estagio = VagaEstagio(
             id=2, titulo="Estágio Dev", descricao="Python", area="TI",
             modalidade=Modalidade.REMOTO, tipo=TipoVaga.ESTAGIO,
             bolsa_auxilio=1000.0, instituicao_conveniada="Univ",
-            prazo_inscricao=self.future_date
+            prazo_inscricao=self.future_date,
+            localidade="Remoto"
         )
 
         # Regra: CLT * 1.8 | Estágio * 1.1
