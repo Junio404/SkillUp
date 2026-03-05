@@ -109,12 +109,12 @@ class TestSkillUpSuite(unittest.TestCase):
         """Teste 7 - Exceção: Deve lançar ValueError para CPF com formato inválido."""
         with self.assertRaises(ValueError):
             # CPF com letras
-            Candidato(1, "João", "1234567890a", "joao@email.com", ["TI"], "Superior")
+            Candidato(1, "João", "1234567890a", "joao@email.com", ["TI"], "Superior", localidade="SP")
 
     def test_candidato_email_invalido(self):
         """Teste 8 - Exceção: Deve lançar ValueError para email inválido."""
         with self.assertRaises(ValueError):
-            Candidato(1, "João", "12345678901", "email_sem_arroba", ["TI"], "Superior")
+            Candidato(1, "João", "12345678901", "email_sem_arroba", ["TI"], "Superior", localidade="SP")
 
     def test_vaga_adicionar_requisito_vazio(self):
         """Teste 9 - Exceção: Valida se adicionar requisito vazio lança erro."""
@@ -155,7 +155,8 @@ class TestSkillUpSuite(unittest.TestCase):
             cpf="11122233344", 
             email="maria@mock.com", 
             areas_interesse=["Dados"], 
-            nivel_formacao="Superior"
+            nivel_formacao="Superior",
+            localidade="SP"
         )
         
         # Verifica se o repositório foi chamado corretamente
@@ -181,7 +182,8 @@ class TestSkillUpSuite(unittest.TestCase):
                 cpf="11122233344", 
                 email="joao@mock.com", 
                 areas_interesse=["TI"], 
-                nivel_formacao="Médio"
+                nivel_formacao="Médio",
+                localidade="RJ"
             )
 
     def test_prazo_validador_com_mock_data(self):

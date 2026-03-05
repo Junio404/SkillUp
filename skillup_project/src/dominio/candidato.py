@@ -73,6 +73,7 @@ class Candidato:
     _areas_interesse: List[str] = field(default_factory=list, repr=False)
     nivel_formacao: str = ""
     curriculo: str | None = None
+    localidade: str = ""
 
     # Dependências injetadas
     id_validador: Validador = field(default_factory=IdValidador, repr=False)
@@ -89,7 +90,9 @@ class Candidato:
         self.email_validador.validar(self.email)
         self.areas_validador.validar(self._areas_interesse)
         self.nivel_validador.validar(self.nivel_formacao)
-
+        if not isinstance(self.localidade, str):
+            raise TypeError("Localidade deve ser uma string.")
+        self.localidade = self.localidade.strip()
         # Proteção contra mutação externa
         self._areas_interesse = [a.strip() for a in self._areas_interesse]
 
@@ -139,6 +142,10 @@ class Candidato:
             self.nivel_formacao = novo_valor
         elif campo == "curriculo":
             self.curriculo = novo_valor
+        elif campo == "localidade":
+            if not isinstance(novo_valor, str):
+                raise TypeError("Localidade deve ser uma string.")
+            self.localidade = novo_valor.strip()
         else:
             raise ValueError(f"Campo '{campo}' não pode ser atualizado.")
 
@@ -159,7 +166,8 @@ class CandidatoMapper:
             "email": candidato.email,
             "areas_interesse": list(candidato.areas_interesse),
             "nivel_formacao": candidato.nivel_formacao,
-            "curriculo": candidato.curriculo
+            "curriculo": candidato.curriculo,
+            "localidade": candidato.localidade
         }
 
     @staticmethod
@@ -171,5 +179,6 @@ class CandidatoMapper:
             email=dados["email"],
             _areas_interesse=dados["areas_interesse"],
             nivel_formacao=dados["nivel_formacao"],
-            curriculo=dados.get("curriculo")
+            curriculo=dados.get("curriculo"),
+            localidade=dados.get("localidade", "")
         )
