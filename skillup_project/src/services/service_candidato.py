@@ -9,7 +9,7 @@ class CandidatoService:
         ''' Inicializa o serviço com um repositório específico.'''
         self.repo = repositorio
 
-    def cadastrar(self, nome, cpf, email, areas_interesse, nivel_formacao):
+    def cadastrar(self, nome, cpf, email, areas_interesse, nivel_formacao, localidade=""):
         ''' Cadastra um novo candidato. Realiza validações de negócio, como verificar se já existe um candidato com o mesmo CPF.'''
         candidatos = self.repo.listar()
 
@@ -24,7 +24,8 @@ class CandidatoService:
             cpf,
             email,
             areas_interesse,
-            nivel_formacao
+            nivel_formacao,
+            localidade=localidade
         )
 
         self.repo.salvar(candidato)
