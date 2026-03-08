@@ -1,7 +1,7 @@
 import unittest
 from datetime import date
 from unittest.mock import Mock, PropertyMock
-from src.service.service_inscricao_curso import InscricaoCursoService
+from src.services.service_inscricao_curso import InscricaoCursoService
 from src.interfaces.interface_inscricao_curso import IInscricaoCursoRepositorio
 from src.interfaces.interface_curso import ICursoRepositorio
 from src.interfaces.interface_candidato import ICandidatoRepositorio
