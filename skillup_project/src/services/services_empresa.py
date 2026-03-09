@@ -1,5 +1,5 @@
 from src.dominio.empresa import Empresa
-from src.interfaces.interface_empresa import IEmpresaRepositorio
+from src.interfaces.interface_empresa import IEmpresa
 
 
 class EmpresaService:
@@ -7,11 +7,11 @@ class EmpresaService:
     Serviço de domínio para gerenciamento de empresas.
     Contém a lógica de negócio e validações relacionadas às empresas.
 
-    Recebe um repositório que implementa a interface IEmpresaRepositorio
+    Recebe um repositório que implementa a interface IEmpresa
     para realizar operações de persistência.
     """
 
-    def __init__(self, repositorio: IEmpresaRepositorio):
+    def __init__(self, repositorio: IEmpresa):
         """Inicializa o serviço com um repositório específico."""
         self.repo = repositorio
 

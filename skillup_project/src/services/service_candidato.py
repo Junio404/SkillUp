@@ -118,5 +118,75 @@ class CandidatoService:
         '''Retorna uma lista de strings representando os candidatos com o nível de formação especificado. Cada string contém as informações do candidato de forma legível.'''
         return [str(c) for c in self.buscar_por_nivel_formacao(nivel)]
 
+    # ==========================================
+    # MÉTODOS DE CURRÍCULO
+    # ==========================================
+
+    def inicializar_curriculo(self, id_candidato: int):
+        '''Inicializa um currículo vazio para o candidato.'''
+        candidato = self.buscar_por_id(id_candidato)
+        candidato.inicializar_curriculo()
+        self.repo.atualizar(candidato)
+        return candidato
+
+    def obter_curriculo(self, id_candidato: int):
+        '''Retorna o currículo do candidato.'''
+        candidato = self.buscar_por_id(id_candidato)
+        return candidato.curriculo
+
+    def atualizar_objetivo_curriculo(self, id_candidato: int, objetivo: str):
+        '''Atualiza o objetivo profissional do currículo.'''
+        candidato = self.buscar_por_id(id_candidato)
+        candidato.atualizar_objetivo_curriculo(objetivo)
+        self.repo.atualizar(candidato)
+        return candidato
+
+    def atualizar_resumo_curriculo(self, id_candidato: int, resumo: str):
+        '''Atualiza o resumo profissional do currículo.'''
+        candidato = self.buscar_por_id(id_candidato)
+        candidato.atualizar_resumo_curriculo(resumo)
+        self.repo.atualizar(candidato)
+        return candidato
+
+    def adicionar_experiencia(self, id_candidato: int, empresa: str, cargo: str,
+                               descricao: str = "", data_inicio: str = "", data_fim: str = ""):
+        '''Adiciona uma experiência profissional ao currículo do candidato.'''
+        candidato = self.buscar_por_id(id_candidato)
+        candidato.adicionar_experiencia(empresa, cargo, descricao, data_inicio, data_fim)
+        self.repo.atualizar(candidato)
+        return candidato
+
+    def remover_experiencia(self, id_candidato: int, indice: int):
+        '''Remove uma experiência pelo índice.'''
+        candidato = self.buscar_por_id(id_candidato)
+        candidato.remover_experiencia(indice)
+        self.repo.atualizar(candidato)
+        return candidato
+
+    def listar_experiencias(self, id_candidato: int):
+        '''Lista todas as experiências do candidato.'''
+        candidato = self.buscar_por_id(id_candidato)
+        return candidato.listar_experiencias()
+
+    def adicionar_formacao(self, id_candidato: int, instituicao: str, curso: str, nivel: str,
+                           data_inicio: str = "", data_conclusao: str = ""):
+        '''Adiciona uma formação acadêmica ao currículo do candidato.'''
+        candidato = self.buscar_por_id(id_candidato)
+        candidato.adicionar_formacao(instituicao, curso, nivel, data_inicio, data_conclusao)
+        self.repo.atualizar(candidato)
+        return candidato
+
+    def remover_formacao(self, id_candidato: int, indice: int):
+        '''Remove uma formação pelo índice.'''
+        candidato = self.buscar_por_id(id_candidato)
+        candidato.remover_formacao(indice)
+        self.repo.atualizar(candidato)
+        return candidato
+
+    def listar_formacoes(self, id_candidato: int):
+        '''Lista todas as formações do candidato.'''
+        candidato = self.buscar_por_id(id_candidato)
+        return candidato.listar_formacoes()
+
 
 
