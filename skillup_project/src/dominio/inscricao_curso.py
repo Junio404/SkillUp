@@ -13,6 +13,7 @@ from .validators import IdValidador, DataInscricaoValidador, StatusInscricaoVali
 class StatusInscricao(Enum):
     DEFERIDO = 0
     INDEFERIDO = 1
+    CONCLUIDO = 2
 
 
 # ==============================
@@ -47,6 +48,12 @@ class InscricaoCurso:
 
     def indeferir(self) -> None:
         self.status = StatusInscricao.INDEFERIDO
+
+    def concluir(self) -> None:
+        """Marca a inscrição como concluída."""
+        if self.status != StatusInscricao.DEFERIDO:
+            raise ValueError("Somente inscrições deferidas podem ser concluídas.")
+        self.status = StatusInscricao.CONCLUIDO
 
 
 # ==============================

@@ -18,12 +18,10 @@ from .validators import (
 
 @dataclass
 class InstituicaoEnsino(EntidadePublicadora):
-    id: int
-    razao_social: str
-    nome_fantasia: str
-    _cnpj: str = field(repr=False)
-    registro_educacional: str
-    tipo: str
+    razao_social: str = ""
+    nome_fantasia: str = ""
+    registro_educacional: str = ""
+    tipo: str = ""
     modalidades: List[str] = field(default_factory=list)
     credenciada: bool = True
 
@@ -68,6 +66,7 @@ class InstituicaoEnsinoMapper:
     def to_dict(instituicao: InstituicaoEnsino) -> dict:
         return {
             "id": instituicao.id,
+            "nome": instituicao.nome,
             "razao_social": instituicao.razao_social,
             "nome_fantasia": instituicao.nome_fantasia,
             "cnpj": instituicao.cnpj,
@@ -81,8 +80,9 @@ class InstituicaoEnsinoMapper:
     def from_dict(d: dict) -> InstituicaoEnsino:
         return InstituicaoEnsino(
             id=d["id"],
-            razao_social=d.get("razao_social", d.get("nome")),
-            nome_fantasia=d.get("nome_fantasia", d.get("nome")),
+            nome=d.get("nome", d.get("nome_fantasia", "")),
+            razao_social=d.get("razao_social", d.get("nome", "")),
+            nome_fantasia=d.get("nome_fantasia", d.get("nome", "")),
             _cnpj=d["cnpj"],
             registro_educacional=d["registro_educacional"],
             tipo=d["tipo"],
