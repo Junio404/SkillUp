@@ -106,6 +106,81 @@ class TestServiceCandidato(unittest.TestCase):
         self.mock_repo.contar_total.return_value = 5
         self.assertEqual(self.service.contar_total(), 5)
 
+    # --- Testes de Currículo ---
+
+    def test_inicializar_curriculo(self):
+        candidato = Mock()
+        candidato.curriculo = None
+        self.mock_repo.buscar_por_id.return_value = candidato
+        self.service.inicializar_curriculo(1)
+        candidato.inicializar_curriculo.assert_called_once()
+        self.mock_repo.atualizar.assert_called_once_with(candidato)
+
+    def test_obter_curriculo(self):
+        candidato = Mock()
+        candidato.curriculo = {"objetivo": "Dev", "experiencias": []}
+        self.mock_repo.buscar_por_id.return_value = candidato
+        resultado = self.service.obter_curriculo(1)
+        self.assertEqual(resultado["objetivo"], "Dev")
+
+    def test_atualizar_objetivo_curriculo(self):
+        candidato = Mock()
+        self.mock_repo.buscar_por_id.return_value = candidato
+        self.service.atualizar_objetivo_curriculo(1, "Desenvolvedor Python")
+        candidato.atualizar_objetivo_curriculo.assert_called_once_with("Desenvolvedor Python")
+        self.mock_repo.atualizar.assert_called_once()
+
+    def test_atualizar_resumo_curriculo(self):
+        candidato = Mock()
+        self.mock_repo.buscar_por_id.return_value = candidato
+        self.service.atualizar_resumo_curriculo(1, "5 anos de experiência")
+        candidato.atualizar_resumo_curriculo.assert_called_once_with("5 anos de experiência")
+        self.mock_repo.atualizar.assert_called_once()
+
+    def test_adicionar_experiencia(self):
+        candidato = Mock()
+        self.mock_repo.buscar_por_id.return_value = candidato
+        self.service.adicionar_experiencia(1, "Tech Corp", "Dev", "Descrição", "2020-01", "2023-06")
+        candidato.adicionar_experiencia.assert_called_once_with("Tech Corp", "Dev", "Descrição", "2020-01", "2023-06")
+        self.mock_repo.atualizar.assert_called_once()
+
+    def test_remover_experiencia(self):
+        candidato = Mock()
+        self.mock_repo.buscar_por_id.return_value = candidato
+        self.service.remover_experiencia(1, 0)
+        candidato.remover_experiencia.assert_called_once_with(0)
+        self.mock_repo.atualizar.assert_called_once()
+
+    def test_listar_experiencias(self):
+        candidato = Mock()
+        candidato.listar_experiencias.return_value = [{"empresa": "Tech", "cargo": "Dev"}]
+        self.mock_repo.buscar_por_id.return_value = candidato
+        resultado = self.service.listar_experiencias(1)
+        self.assertEqual(len(resultado), 1)
+        self.assertEqual(resultado[0]["empresa"], "Tech")
+
+    def test_adicionar_formacao(self):
+        candidato = Mock()
+        self.mock_repo.buscar_por_id.return_value = candidato
+        self.service.adicionar_formacao(1, "USP", "CC", "Graduação", "2015-03", "2019-12")
+        candidato.adicionar_formacao.assert_called_once_with("USP", "CC", "Graduação", "2015-03", "2019-12")
+        self.mock_repo.atualizar.assert_called_once()
+
+    def test_remover_formacao(self):
+        candidato = Mock()
+        self.mock_repo.buscar_por_id.return_value = candidato
+        self.service.remover_formacao(1, 0)
+        candidato.remover_formacao.assert_called_once_with(0)
+        self.mock_repo.atualizar.assert_called_once()
+
+    def test_listar_formacoes(self):
+        candidato = Mock()
+        candidato.listar_formacoes.return_value = [{"instituicao": "USP", "curso": "CC"}]
+        self.mock_repo.buscar_por_id.return_value = candidato
+        resultado = self.service.listar_formacoes(1)
+        self.assertEqual(len(resultado), 1)
+        self.assertEqual(resultado[0]["instituicao"], "USP")
+
 
 if __name__ == "__main__":
     unittest.main()
