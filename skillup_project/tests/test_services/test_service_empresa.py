@@ -44,39 +44,17 @@ class TestServiceEmpresa(unittest.TestCase):
         with self.assertRaisesRegex(ValueError, "Empresa não encontrada"):
             self.service.buscar_por_id(999)
 
-    def test_buscar_por_cnpj_sucesso(self):
-        empresa_mock = Mock()
-        self.mock_repo.buscar_por_cnpj.return_value = empresa_mock
-        resultado = self.service.buscar_por_cnpj("12345678000199")
-        self.assertEqual(resultado, empresa_mock)
-
-    def test_buscar_por_cnpj_inexistente(self):
-        self.mock_repo.buscar_por_cnpj.return_value = None
-        with self.assertRaisesRegex(ValueError, "Empresa não encontrada"):
-            self.service.buscar_por_cnpj("00000000000000")
-
     def test_listar(self):
         self.mock_repo.listar.return_value = [Mock(), Mock()]
         resultado = self.service.listar()
         self.assertEqual(len(resultado), 2)
 
-    def test_buscar_por_nome(self):
-        self.mock_repo.buscar_por_nome.return_value = [Mock()]
-        resultado = self.service.buscar_por_nome("Tech")
+    def test_buscar_por_filtros(self):
+        """Testa busca por filtros dinâmicos"""
+        self.mock_repo.buscar_por_filtros.return_value = [Mock()]
+        resultado = self.service.buscar_por_filtros(porte="medio")
         self.assertEqual(len(resultado), 1)
-
-    def test_buscar_por_porte(self):
-        self.mock_repo.buscar_por_porte.return_value = [Mock(), Mock()]
-        resultado = self.service.buscar_por_porte("medio")
-        self.assertEqual(len(resultado), 2)
-
-    def test_contar_total(self):
-        self.mock_repo.contar_total.return_value = 10
-        self.assertEqual(self.service.contar_total(), 10)
-
-    def test_contar_por_porte(self):
-        self.mock_repo.contar_por_porte.return_value = 3
-        self.assertEqual(self.service.contar_por_porte("grande"), 3)
+        self.mock_repo.buscar_por_filtros.assert_called_once_with(porte="medio")
 
     def test_deletar(self):
         self.mock_repo.buscar_por_id.return_value = Mock()
@@ -90,6 +68,14 @@ class TestServiceEmpresa(unittest.TestCase):
         resultado = self.service.listar_formatado()
         self.assertEqual(len(resultado), 1)
         self.assertIsInstance(resultado[0], str)
+
+    def test_atualizar(self):
+        """Testa atualização de empresa"""
+        empresa = Mock()
+        self.mock_repo.buscar_por_id.return_value = empresa
+        self.service.atualizar(1, "nome", "Novo Nome")
+        empresa.atualizar_dado.assert_called_once_with("nome", "Novo Nome")
+        self.mock_repo.atualizar.assert_called_once()
 
 
 if __name__ == "__main__":
