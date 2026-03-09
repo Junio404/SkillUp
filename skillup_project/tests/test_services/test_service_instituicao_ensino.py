@@ -1,105 +1,134 @@
 import unittest
-from unittest.mock import Mock
+from unittest.mock import Mock, MagicMock
 from src.services.service_instituicao_ensino import ServiceInstituicaoEnsino
-from src.interfaces.interface_instituicao_ensino import IInstituicaoEnsino
+from src.dominio.instituicao_ensino import InstituicaoEnsino
 
 
 class TestServiceInstituicaoEnsino(unittest.TestCase):
     """Testes do serviço de InstituicaoEnsino."""
 
     def setUp(self):
-        self.mock_repo = Mock(spec=IInstituicaoEnsino)
-        self.service = ServiceInstituicaoEnsino(self.mock_repo)
+        self.mock_repo_instituicao = MagicMock()
+        self.mock_repo_curso = MagicMock()
+        self.service = ServiceInstituicaoEnsino(
+            self.mock_repo_instituicao, 
+            self.mock_repo_curso
+        )
 
     # -- CRUD --
 
-    def test_cadastrar_sucesso(self):
-        self.mock_repo.buscar_por_cnpj.return_value = None
-        self.mock_repo.listar.return_value = []
-        inst = self.service.cadastrar(
-            razao_social="Instituto Alpha LTDA",
-            nome_fantasia="Alpha",
-            cnpj="12345678000190",
-            registro_educacional="REG123",
-            tipo="Universidade",
-            modalidades=["presencial", "ead"],
-            credenciada=True,
-        )
-        self.mock_repo.salvar.assert_called_once()
-        self.assertEqual(inst.id, 1)
-        self.assertEqual(inst.nome_fantasia, "Alpha")
+    def test_criar_conta_sucesso(self):
+        """Testa criação de conta com sucesso"""
+        self.mock_repo_instituicao.buscar_por_cnpj.return_value = None
+        instituicao = MagicMock(spec=InstituicaoEnsino)
+        instituicao.cnpj = "12345678000190"
+        
+        resultado = self.service.criar_conta(instituicao)
+        
+        self.mock_repo_instituicao.salvar.assert_called_once_with(instituicao)
+        self.assertEqual(resultado, instituicao)
 
-    def test_cadastrar_cnpj_duplicado(self):
-        self.mock_repo.buscar_por_cnpj.return_value = Mock()
-        with self.assertRaisesRegex(ValueError, "Já existe instituição com este CNPJ"):
-            self.service.cadastrar("X", "X", "12345678000190", "R", "U")
-
-    def test_cadastrar_id_incremental(self):
-        existente = Mock()
-        existente.id = 5
-        self.mock_repo.buscar_por_cnpj.return_value = None
-        self.mock_repo.listar.return_value = [existente]
-        inst = self.service.cadastrar("Beta", "Beta", "98765432000100", "R2", "Faculdade")
-        self.assertEqual(inst.id, 6)
+    def test_criar_conta_cnpj_duplicado(self):
+        """Testa erro ao criar conta com CNPJ duplicado"""
+        self.mock_repo_instituicao.buscar_por_cnpj.return_value = MagicMock()
+        instituicao = MagicMock(spec=InstituicaoEnsino)
+        instituicao.cnpj = "12345678000190"
+        
+        with self.assertRaisesRegex(ValueError, "Já existe uma instituição com este CNPJ"):
+            self.service.criar_conta(instituicao)
 
     def test_buscar_por_id_sucesso(self):
-        obj = Mock()
-        self.mock_repo.buscar_por_id.return_value = obj
-        self.assertEqual(self.service.buscar_por_id(1), obj)
+        """Testa busca por ID com sucesso"""
+        obj = MagicMock()
+        self.mock_repo_instituicao.buscar_por_id.return_value = obj
+        
+        resultado = self.service.buscar_por_id(1)
+        
+        self.assertEqual(resultado, obj)
+        self.mock_repo_instituicao.buscar_por_id.assert_called_once_with(1)
 
     def test_buscar_por_id_inexistente(self):
-        self.mock_repo.buscar_por_id.return_value = None
-        with self.assertRaisesRegex(ValueError, "não encontrada"):
-            self.service.buscar_por_id(999)
-
-    # -- BUSCAS --
+        """Testa busca por ID inexistente retorna None"""
+        self.mock_repo_instituicao.buscar_por_id.return_value = None
+        
+        resultado = self.service.buscar_por_id(999)
+        
+        self.assertIsNone(resultado)
 
     def test_buscar_por_cnpj_sucesso(self):
-        obj = Mock()
-        self.mock_repo.buscar_por_cnpj.return_value = obj
-        self.assertEqual(self.service.buscar_por_cnpj("12345678000190"), obj)
+        """Testa busca por CNPJ com sucesso"""
+        obj = MagicMock()
+        self.mock_repo_instituicao.buscar_por_cnpj.return_value = obj
+        
+        resultado = self.service.buscar_por_cnpj("12345678000190")
+        
+        self.assertEqual(resultado, obj)
 
     def test_buscar_por_cnpj_inexistente(self):
-        self.mock_repo.buscar_por_cnpj.return_value = None
-        with self.assertRaisesRegex(ValueError, "não encontrada"):
-            self.service.buscar_por_cnpj("00000000000000")
-
-    def test_buscar_por_nome(self):
-        self.mock_repo.buscar_por_nome.return_value = [Mock()]
-        self.assertEqual(len(self.service.buscar_por_nome("Alpha")), 1)
-
-    def test_buscar_por_tipo(self):
-        self.mock_repo.buscar_por_tipo.return_value = [Mock()]
-        self.assertEqual(len(self.service.buscar_por_tipo("Universidade")), 1)
-
-    def test_buscar_credenciadas(self):
-        self.mock_repo.buscar_credenciadas.return_value = [Mock(), Mock()]
-        self.assertEqual(len(self.service.buscar_credenciadas()), 2)
-
-    def test_buscar_por_modalidade(self):
-        self.mock_repo.buscar_por_modalidade.return_value = [Mock()]
-        self.assertEqual(len(self.service.buscar_por_modalidade("ead")), 1)
+        """Testa busca por CNPJ inexistente retorna None"""
+        self.mock_repo_instituicao.buscar_por_cnpj.return_value = None
+        
+        resultado = self.service.buscar_por_cnpj("00000000000000")
+        
+        self.assertIsNone(resultado)
 
     def test_listar(self):
-        self.mock_repo.listar.return_value = [Mock(), Mock()]
-        self.assertEqual(len(self.service.listar()), 2)
+        """Testa listagem de instituições"""
+        instituicoes = [MagicMock(), MagicMock()]
+        self.mock_repo_instituicao.listar.return_value = instituicoes
+        
+        resultado = self.service.listar()
+        
+        self.assertEqual(len(resultado), 2)
 
-    # -- CONTAGEM --
+    def test_fazer_login_sucesso(self):
+        """Testa login de instituição com sucesso"""
+        instituicao = MagicMock()
+        self.mock_repo_instituicao.buscar_por_id.return_value = instituicao
+        
+        resultado = self.service.fazer_login(1)
+        
+        self.assertEqual(resultado, instituicao)
 
-    def test_contar_total(self):
-        self.mock_repo.contar_total.return_value = 5
-        self.assertEqual(self.service.contar_total(), 5)
+    def test_fazer_login_instituicao_inexistente(self):
+        """Testa login com instituição inexistente"""
+        self.mock_repo_instituicao.buscar_por_id.return_value = None
+        
+        resultado = self.service.fazer_login(999)
+        
+        self.assertIsNone(resultado)
 
-    def test_contar_credenciadas(self):
-        self.mock_repo.contar_credenciadas.return_value = 3
-        self.assertEqual(self.service.contar_credenciadas(), 3)
+    def test_cadastrar_curso_sucesso(self):
+        """Testa cadastro de curso com sucesso"""
+        instituicao = MagicMock()
+        instituicao.validar_publicacao.return_value = None
+        curso = MagicMock()
+        
+        resultado = self.service.cadastrar_curso(instituicao, curso)
+        
+        self.assertTrue(resultado)
+        self.mock_repo_curso.salvar.assert_called_once_with(curso)
 
-    # -- AÇÕES DE NEGÓCIO --
+    def test_cadastrar_curso_sem_permissao(self):
+        """Testa cadastro de curso sem permissão"""
+        instituicao = MagicMock()
+        instituicao.validar_publicacao.side_effect = PermissionError("Não credenciada")
+        curso = MagicMock()
+        
+        resultado = self.service.cadastrar_curso(instituicao, curso)
+        
+        self.assertFalse(resultado)
+        self.mock_repo_curso.salvar.assert_not_called()
 
-    def test_deletar(self):
-        self.mock_repo.buscar_por_id.return_value = Mock()
-        self.service.deletar(1)
-        self.mock_repo.deletar.assert_called_once_with(1)
+    def test_listar_cursos(self):
+        """Testa listagem de cursos de uma instituição"""
+        cursos = [MagicMock(), MagicMock()]
+        self.mock_repo_curso.listar_por_instituicao.return_value = cursos
+        
+        resultado = self.service.listar_cursos(1)
+        
+        self.assertEqual(len(resultado), 2)
+        self.mock_repo_curso.listar_por_instituicao.assert_called_once_with(1)
 
 
 if __name__ == "__main__":
