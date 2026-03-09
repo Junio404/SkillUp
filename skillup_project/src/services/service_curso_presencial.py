@@ -1,7 +1,6 @@
 from datetime import date
 from typing import Optional
 from src.dominio.curso_presencial import CursoPresencial
-from src.dominio.vaga import Modalidade
 from src.interfaces.interface_curso import ICursoRepositorio
 
 
@@ -24,9 +23,9 @@ class CursoPresencialService:
         capacidade: int,
         localidade: str,
         prazo_inscricao: Optional[date] = None,
-        modalidade: Modalidade = Modalidade.PRESENCIAL,
     ):
         """Cadastra um novo curso presencial. Valida duplicidade por nome."""
+        from src.dominio.vaga import Modalidade
         existentes = self.repo.listar_por_nome(nome)
         if existentes:
             raise ValueError("Já existe curso com este nome")
@@ -39,7 +38,7 @@ class CursoPresencialService:
             nome=nome,
             area=area,
             carga_horaria=carga_horaria,
-            modalidade=modalidade,
+            modalidade=Modalidade.PRESENCIAL,
             capacidade=capacidade,
             prazo_inscricao=prazo_inscricao,
             localidade=localidade,

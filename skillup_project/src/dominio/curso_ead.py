@@ -1,7 +1,6 @@
 from dataclasses import dataclass, field
 from datetime import date
 from .curso_abs import Curso
-from .vaga import Modalidade
 from .validators import StrValidador, UrlValidador, Validador
 
 
@@ -17,6 +16,8 @@ class CursoEAD(Curso):
     url_validador: Validador = field(default_factory=UrlValidador, repr=False)
 
     def __post_init__(self):
+        from .vaga import Modalidade
+        self.modalidade = Modalidade.REMOTO
         self.url_validador.validar(self.plataforma_url)
         super().__post_init__()
 
@@ -48,12 +49,13 @@ class CursoEADMapper:
 
     @staticmethod
     def from_dict(d: dict) -> CursoEAD:
+        from .vaga import Modalidade
         return CursoEAD(
             id=d["id"],
             nome=d["nome"],
             area=d["area"],
             carga_horaria=d["carga_horaria"],
-            modalidade=Modalidade(d["modalidade"]),
+            modalidade=Modalidade.REMOTO,
             capacidade=d["capacidade"],
             prazo_inscricao=date.fromisoformat(d["prazo_inscricao"]) if d.get("prazo_inscricao") else None,
             ativo=d.get("ativo", True),
