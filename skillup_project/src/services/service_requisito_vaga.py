@@ -1,4 +1,4 @@
-from src.dominio.requisitos_vaga import RequisitoVaga
+from src.dominio.requisitos_vaga import RequisitoVaga, TipoVagaRequisito
 from src.interfaces.interface_requisito_vaga import IRequisitoVagaRepositorio
 
 
@@ -18,6 +18,7 @@ class RequisitoVagaService:
         id_vaga: int,
         id_competencia: int,
         nivel_minimo: str,
+        tipo_vaga: TipoVagaRequisito,
         obrigatorio: bool = True,
     ):
         """Cadastra um novo requisito para uma vaga. Valida duplicidade."""
@@ -34,6 +35,7 @@ class RequisitoVagaService:
             id_competencia=id_competencia,
             nivel_minimo=nivel_minimo,
             obrigatorio=obrigatorio,
+            tipo_vaga=tipo_vaga,
         )
 
         self.repo.salvar(requisito)

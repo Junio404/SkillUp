@@ -1,0 +1,182 @@
+[
+    {
+        "id_area": 1,
+        "nome_area": "Tecnologia da Informação"
+    },
+    {
+        "id_area": 2,
+        "nome_area": "Desenvolvimento de Software"
+    },
+    {
+        "id_area": 3,
+        "nome_area": "Ciência de Dados"
+    },
+    {
+        "id_area": 4,
+        "nome_area": "Cloud e DevOps"
+    },
+    {
+        "id_area": 5,
+        "nome_area": "Segurança da Informação"
+    },
+    {
+        "id_area": 6,
+        "nome_area": "Administração"
+    },
+    {
+        "id_area": 7,
+        "nome_area": "Gestão de Projetos"
+    },
+    {
+        "id_area": 8,
+        "nome_area": "Empreendedorismo"
+    },
+    {
+        "id_area": 9,
+        "nome_area": "Marketing Digital"
+    },
+    {
+        "id_area": 10,
+        "nome_area": "Marketing e Comunicação"
+    },
+    {
+        "id_area": 11,
+        "nome_area": "Vendas e Negociação"
+    },
+    {
+        "id_area": 12,
+        "nome_area": "Finanças"
+    },
+    {
+        "id_area": 13,
+        "nome_area": "Contabilidade"
+    },
+    {
+        "id_area": 14,
+        "nome_area": "Controladoria"
+    },
+    {
+        "id_area": 15,
+        "nome_area": "Design Gráfico"
+    },
+    {
+        "id_area": 16,
+        "nome_area": "UX/UI Design"
+    },
+    {
+        "id_area": 17,
+        "nome_area": "Design de Produto"
+    },
+    {
+        "id_area": 18,
+        "nome_area": "Recursos Humanos"
+    },
+    {
+        "id_area": 19,
+        "nome_area": "Gestão de Talentos"
+    },
+    {
+        "id_area": 20,
+        "nome_area": "Direito"
+    },
+    {
+        "id_area": 21,
+        "nome_area": "Engenharia de Software"
+    },
+    {
+        "id_area": 22,
+        "nome_area": "Engenharia Civil"
+    },
+    {
+        "id_area": 23,
+        "nome_area": "Engenharia Elétrica"
+    },
+    {
+        "id_area": 24,
+        "nome_area": "Engenharia Mecânica"
+    },
+    {
+        "id_area": 25,
+        "nome_area": "Engenharia de Produção"
+    },
+    {
+        "id_area": 26,
+        "nome_area": "Logística e Supply Chain"
+    },
+    {
+        "id_area": 27,
+        "nome_area": "Qualidade"
+    },
+    {
+        "id_area": 28,
+        "nome_area": "Saúde"
+    },
+    {
+        "id_area": 29,
+        "nome_area": "Farmácia"
+    },
+    {
+        "id_area": 30,
+        "nome_area": "Nutrição"
+    },
+    {
+        "id_area": 31,
+        "nome_area": "Educação"
+    },
+    {
+        "id_area": 32,
+        "nome_area": "Idiomas"
+    },
+    {
+        "id_area": 33,
+        "nome_area": "Psicologia"
+    },
+    {
+        "id_area": 34,
+        "nome_area": "Comunicação Social"
+    },
+    {
+        "id_area": 35,
+        "nome_area": "Audiovisual"
+    },
+    {
+        "id_area": 36,
+        "nome_area": "Arquitetura"
+    },
+    {
+        "id_area": 37,
+        "nome_area": "Meio Ambiente"
+    },
+    {
+        "id_area": 38,
+        "nome_area": "Agronegócio"
+    },
+    {
+        "id_area": 39,
+        "nome_area": "Turismo e Hotelaria"
+    },
+    {
+        "id_area": 40,
+        "nome_area": "Gastronomia"
+    },
+    {
+        "id_area": 41,
+        "nome_area": "Moda"
+    },
+    {
+        "id_area": 42,
+        "nome_area": "E-commerce"
+    },
+    {
+        "id_area": 43,
+        "nome_area": "Atendimento ao Cliente"
+    },
+    {
+        "id_area": 44,
+        "nome_area": "Liderança e Soft Skills"
+    },
+    {
+        "id_area": 45,
+        "nome_area": "Análise de Dados"
+    }
+]
