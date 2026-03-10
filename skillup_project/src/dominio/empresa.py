@@ -54,6 +54,19 @@ class Empresa:
         limites = {"pequeno": 5, "medio": 15, "grande": 50}
         return limites.get(self.porte, 0)
 
+    # ==============================
+    # ATUALIZAÇÃO DE DADOS
+    # ==============================
+    def atualizar_dado(self, campo: str, novo_valor) -> None:
+        if campo == "nome":
+            self.nome_validador.validar(novo_valor)
+            self.nome = novo_valor
+        elif campo == "porte":
+            self.porte_validador.validar(novo_valor)
+            self.porte = novo_valor
+        else:
+            raise ValueError(f"Campo '{campo}' não pode ser atualizado.")
+
 
 # ==============================
 # MAPPER

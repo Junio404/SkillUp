@@ -11,9 +11,15 @@ from .validators import IdValidador, DataInscricaoValidador, StatusInscricaoVali
 # ==============================
 
 class StatusInscricao(Enum):
-    DEFERIDO = 0
-    INDEFERIDO = 1
-    CONCLUIDO = 2
+    DEFERIDO = "Deferido"
+    INDEFERIDO = "Indeferido"
+    CONCLUIDO = "Concluído"
+
+
+class TipoCursoInscricao(Enum):
+    """Identifica o subtipo de curso para desambiguar a referência."""
+    EAD = "EAD"
+    PRESENCIAL = "PRESENCIAL"
 
 
 # ==============================
@@ -24,6 +30,7 @@ class StatusInscricao(Enum):
 class InscricaoCurso:
     id: int
     id_curso: int
+    tipo_curso: TipoCursoInscricao  # Desambigua entre repositórios EAD e Presencial
     id_aluno: int
     data_inscricao: date
     status: StatusInscricao = StatusInscricao.DEFERIDO
@@ -36,6 +43,16 @@ class InscricaoCurso:
         self.id_validador.validar(self.id)
         self.id_validador.validar(self.id_curso)
         self.id_validador.validar(self.id_aluno)
+        
+        # Valida tipo_curso
+        if isinstance(self.tipo_curso, str):
+            try:
+                self.tipo_curso = TipoCursoInscricao(self.tipo_curso)
+            except ValueError:
+                raise ValueError(f"Tipo de curso inválido: {self.tipo_curso}. Use EAD ou PRESENCIAL.")
+        if not isinstance(self.tipo_curso, TipoCursoInscricao):
+            raise TypeError("tipo_curso deve ser TipoCursoInscricao")
+        
         self.data_validador.validar(self.data_inscricao)
         self.status_validador.validar(self.status)
 
@@ -67,6 +84,7 @@ class InscricaoCursoMapper:
         return {
             "id": inscricao.id,
             "curso_id": inscricao.id_curso,
+            "tipo_curso": inscricao.tipo_curso.value,
             "aluno_id": inscricao.id_aluno,
             "data_inscricao": inscricao.data_inscricao.isoformat(),
             "status": inscricao.status.value,
@@ -77,6 +95,7 @@ class InscricaoCursoMapper:
         return InscricaoCurso(
             id=d["id"],
             id_curso=d["curso_id"],
+            tipo_curso=TipoCursoInscricao(d["tipo_curso"]),
             id_aluno=d["aluno_id"],
             data_inscricao=date.fromisoformat(d["data_inscricao"]),
             status=StatusInscricao(d["status"]),

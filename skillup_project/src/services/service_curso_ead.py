@@ -2,14 +2,20 @@ from datetime import date
 from typing import Optional
 from src.dominio.curso_ead import CursoEAD
 from src.interfaces.interface_curso import ICursoRepositorio
+from src.interfaces.interface_instituicao_ensino import IInstituicaoEnsino
 
 
 class CursoEADService:
     """Serviço de domínio para gerenciamento de cursos EAD.
     Contém a lógica de negócio e validações relacionadas aos cursos EAD."""
 
-    def __init__(self, repositorio: ICursoRepositorio):
+    def __init__(
+        self,
+        repositorio: ICursoRepositorio,
+        repo_instituicao: Optional[IInstituicaoEnsino] = None
+    ):
         self.repo = repositorio
+        self._repo_instituicao = repo_instituicao
 
     # ==========================================
     # CRUD
@@ -17,6 +23,7 @@ class CursoEADService:
 
     def cadastrar(
         self,
+        id_instituicao: int,
         nome: str,
         area: str,
         carga_horaria: int,
@@ -24,8 +31,15 @@ class CursoEADService:
         plataforma_url: str,
         prazo_inscricao: Optional[date] = None,
     ):
-        """Cadastra um novo curso EAD. Valida duplicidade por nome."""
+        """Cadastra um novo curso EAD. Valida existência da instituição."""
         from src.dominio.vaga import Modalidade
+        
+        # Validação de integridade referencial: instituição deve existir
+        if self._repo_instituicao:
+            instituicao = self._repo_instituicao.buscar_por_id(id_instituicao)
+            if not instituicao:
+                raise ValueError(f"Instituição com ID {id_instituicao} não encontrada.")
+        
         existentes = self.repo.listar_por_nome(nome)
         if existentes:
             raise ValueError("Já existe curso com este nome")
@@ -35,6 +49,7 @@ class CursoEADService:
 
         curso = CursoEAD(
             id=novo_id,
+            id_instituicao=id_instituicao,
             nome=nome,
             area=area,
             carga_horaria=carga_horaria,
@@ -46,6 +61,10 @@ class CursoEADService:
 
         self.repo.salvar(curso)
         return curso
+
+    def listar_por_instituicao(self, id_instituicao: int):
+        """Retorna todos os cursos EAD de uma instituição específica."""
+        return [c for c in self.repo.listar_todos() if c.id_instituicao == id_instituicao]
 
     def listar_todos(self):
         """Lista todos os cursos EAD."""

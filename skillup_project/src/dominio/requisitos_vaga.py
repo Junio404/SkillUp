@@ -1,8 +1,19 @@
 from dataclasses import dataclass, field
+from enum import Enum
 from typing import Tuple
 
 from .validators import IdValidador, StrValidador, NivelMinimoValidador, BooleanValidador, Validador
 from .competencia import Nivel
+
+
+# ==============================
+# ENUMS
+# ==============================
+
+class TipoVagaRequisito(Enum):
+    """Identifica o subtipo de vaga para desambiguar a referência."""
+    CLT = "CLT"
+    ESTAGIO = "ESTAGIO"
 
 
 # ==============================
@@ -13,6 +24,7 @@ from .competencia import Nivel
 class RequisitoVaga:
     id: int
     id_vaga: int
+    tipo_vaga: TipoVagaRequisito  # Desambigua entre repositórios CLT e Estágio
     id_competencia: int
     nivel_minimo: str
     obrigatorio: bool = True
@@ -26,6 +38,16 @@ class RequisitoVaga:
         self.id_validador.validar(self.id)
         self.id_validador.validar(self.id_vaga)
         self.id_validador.validar(self.id_competencia)
+        
+        # Valida tipo_vaga
+        if isinstance(self.tipo_vaga, str):
+            try:
+                self.tipo_vaga = TipoVagaRequisito(self.tipo_vaga)
+            except ValueError:
+                raise ValueError(f"Tipo de vaga inválido: {self.tipo_vaga}. Use CLT ou ESTAGIO.")
+        if not isinstance(self.tipo_vaga, TipoVagaRequisito):
+            raise TypeError("tipo_vaga deve ser TipoVagaRequisito")
+        
         self.texto_validador.validar(self.nivel_minimo)
         self.nivel_validador.validar(self.nivel_minimo)
         self.bool_validador.validar(self.obrigatorio)
@@ -60,6 +82,7 @@ class RequisitoVagaMapper:
         return {
             "id": requisito.id,
             "vaga_id": requisito.id_vaga,
+            "tipo_vaga": requisito.tipo_vaga.value,
             "competencia_id": requisito.id_competencia,
             "nivel": requisito.nivel_como_inteiro(),
             "obrigatorio": requisito.obrigatorio,
@@ -71,6 +94,7 @@ class RequisitoVagaMapper:
         return RequisitoVaga(
             id=d["id"],
             id_vaga=d["vaga_id"],
+            tipo_vaga=TipoVagaRequisito(d["tipo_vaga"]),
             id_competencia=d["competencia_id"],
             nivel_minimo=mapa_inverso[d["nivel"]],
             obrigatorio=d.get("obrigatorio", True),

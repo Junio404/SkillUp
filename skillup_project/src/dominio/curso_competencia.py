@@ -1,7 +1,18 @@
 from dataclasses import dataclass, field
+from enum import Enum
 
 from .validators import IdValidador, StrValidador, CursoNivelValidador, Validador
 from .competencia import Nivel
+
+
+# ==============================
+# ENUMS
+# ==============================
+
+class TipoCursoCompetencia(Enum):
+    """Identifica o subtipo de curso para desambiguar a referência."""
+    EAD = "EAD"
+    PRESENCIAL = "PRESENCIAL"
 
 
 # ==============================
@@ -12,6 +23,7 @@ from .competencia import Nivel
 class CursoCompetencia:
     id: int
     id_curso: int
+    tipo_curso: TipoCursoCompetencia  # Desambigua entre repositórios EAD e Presencial
     id_competencia: int
     nivel_conferido: str
 
@@ -24,6 +36,16 @@ class CursoCompetencia:
         self.id_validador.validar(self.id)
         self.id_validador.validar(self.id_curso)
         self.id_validador.validar(self.id_competencia)
+        
+        # Valida tipo_curso
+        if isinstance(self.tipo_curso, str):
+            try:
+                self.tipo_curso = TipoCursoCompetencia(self.tipo_curso)
+            except ValueError:
+                raise ValueError(f"Tipo de curso inválido: {self.tipo_curso}. Use EAD ou PRESENCIAL.")
+        if not isinstance(self.tipo_curso, TipoCursoCompetencia):
+            raise TypeError("tipo_curso deve ser TipoCursoCompetencia")
+        
         self.texto_validador.validar(self.nivel_conferido)
         self.nivel_validador.validar(self.nivel_conferido)
         self.nivel_conferido = self.nivel_conferido.lower()
@@ -52,6 +74,7 @@ class CursoCompetenciaMapper:
         return {
             "id": curso_competencia.id,
             "curso_id": curso_competencia.id_curso,
+            "tipo_curso": curso_competencia.tipo_curso.value,
             "competencia_id": curso_competencia.id_competencia,
             "nivel": curso_competencia.nivel_como_inteiro(),
         }
@@ -62,6 +85,7 @@ class CursoCompetenciaMapper:
         return CursoCompetencia(
             id=d["id"],
             id_curso=d["curso_id"],
+            tipo_curso=TipoCursoCompetencia(d["tipo_curso"]),
             id_competencia=d["competencia_id"],
             nivel_conferido=mapa_inverso[d["nivel"]],
         )

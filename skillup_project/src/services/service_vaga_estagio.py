@@ -1,13 +1,23 @@
+from typing import Optional
 from src.dominio.vaga import VagaEstagio, Modalidade, TipoVaga
 from src.interfaces.interface_vaga import IVagaRepositorio
+from src.interfaces.interface_empresa import IEmpresa
+from src.interfaces.interface_instituicao_ensino import IInstituicaoEnsino
 
 
 class VagaEstagioService:
     """Serviço de domínio para gerenciamento de vagas de estágio.
     Contém a lógica de negócio e validações relacionadas às vagas de estágio."""
 
-    def __init__(self, repositorio: IVagaRepositorio):
+    def __init__(
+        self,
+        repositorio: IVagaRepositorio,
+        repo_empresa: Optional[IEmpresa] = None,
+        repo_instituicao: Optional[IInstituicaoEnsino] = None
+    ):
         self.repo = repositorio
+        self._repo_empresa = repo_empresa
+        self._repo_instituicao = repo_instituicao
 
     # ==========================================
     # CRUD
@@ -15,35 +25,53 @@ class VagaEstagioService:
 
     def cadastrar(
         self,
+        id_empresa: int,
         titulo: str,
         descricao: str,
         area: str,
         modalidade: Modalidade,
         tipo: TipoVaga,
         bolsa_auxilio: float,
-        instituicao_conveniada: str,
+        id_instituicao_conveniada: Optional[int] = None,
         localidade: str = "",
         prazo_inscricao=None,
     ):
-        """Cadastra uma nova vaga de estágio. Gera ID automático."""
+        """Cadastra uma nova vaga de estágio. Valida existência da empresa e instituição."""
+        # Validação de integridade referencial: empresa deve existir
+        if self._repo_empresa:
+            empresa = self._repo_empresa.buscar_por_id(id_empresa)
+            if not empresa:
+                raise ValueError(f"Empresa com ID {id_empresa} não encontrada.")
+        
+        # Validação de integridade referencial: instituição conveniada (se informada) deve existir
+        if id_instituicao_conveniada is not None and self._repo_instituicao:
+            instituicao = self._repo_instituicao.buscar_por_id(id_instituicao_conveniada)
+            if not instituicao:
+                raise ValueError(f"Instituição com ID {id_instituicao_conveniada} não encontrada.")
+        
         todas = self.repo.listar_todas()
         novo_id = 1 if not todas else max(v.id for v in todas) + 1
 
         vaga = VagaEstagio(
             id=novo_id,
+            id_empresa=id_empresa,
             titulo=titulo,
             descricao=descricao,
             area=area,
             modalidade=modalidade,
             tipo=tipo,
             bolsa_auxilio=bolsa_auxilio,
-            instituicao_conveniada=instituicao_conveniada,
+            id_instituicao_conveniada=id_instituicao_conveniada,
             localidade=localidade,
             prazo_inscricao=prazo_inscricao,
         )
 
         self.repo.salvar(vaga)
         return vaga
+
+    def listar_por_empresa(self, id_empresa: int):
+        """Retorna todas as vagas de estágio de uma empresa específica."""
+        return [v for v in self.repo.listar_todas() if v.id_empresa == id_empresa]
 
     def listar_todas(self):
         """Lista todas as vagas de estágio."""

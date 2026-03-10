@@ -57,3 +57,19 @@ class ServiceInstituicaoEnsino:
         Recupera a lista de cursos da instituição.
         """
         return self.repositorio_curso.listar_por_instituicao(instituicao_id)
+
+    def atualizar(self, instituicao: InstituicaoEnsino) -> InstituicaoEnsino:
+        """
+        Atualiza os dados de uma instituição no repositório.
+        """
+        self.repositorio_instituicao.atualizar(instituicao)
+        return instituicao
+
+    def deletar(self, id_instituicao: int) -> None:
+        """
+        Remove uma instituição do sistema.
+        """
+        instituicao = self.buscar_por_id(id_instituicao)
+        if not instituicao:
+            raise ValueError("Instituição não encontrada")
+        self.repositorio_instituicao.deletar(id_instituicao)

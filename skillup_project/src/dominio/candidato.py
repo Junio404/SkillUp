@@ -225,6 +225,11 @@ class Candidato:
             if not isinstance(novo_valor, str):
                 raise TypeError("Localidade deve ser uma string.")
             self.localidade = novo_valor.strip()
+        elif campo == "areas_interesse":
+            if isinstance(novo_valor, str):
+                novo_valor = [a.strip() for a in novo_valor.split(",") if a.strip()]
+            self.areas_validador.validar(novo_valor)
+            self._areas_interesse = [a.strip() for a in novo_valor]
         else:
             raise ValueError(f"Campo '{campo}' não pode ser atualizado.")
 

@@ -1,22 +1,61 @@
-from src.dominio.candidatura import Candidatura, StatusCandidatura
+from typing import Optional
+from src.dominio.candidatura import Candidatura, StatusCandidatura, TipoVagaCandidatura
 from src.interfaces.interface_candidatura import ICandidaturaRepositorio
+from src.interfaces.interface_vaga import IVagaRepositorio
+from src.interfaces.interface_candidato import ICandidatoRepositorio
 
 
 class CandidaturaService:
     """Serviço de domínio para gerenciamento de candidaturas.
     Contém a lógica de negócio e validações relacionadas às candidaturas."""
 
-    def __init__(self, repositorio: ICandidaturaRepositorio):
+    def __init__(
+        self,
+        repositorio: ICandidaturaRepositorio,
+        repo_vaga_clt: Optional[IVagaRepositorio] = None,
+        repo_vaga_estagio: Optional[IVagaRepositorio] = None,
+        repo_candidato: Optional[ICandidatoRepositorio] = None
+    ):
         self.repo = repositorio
+        self._repo_vaga_clt = repo_vaga_clt
+        self._repo_vaga_estagio = repo_vaga_estagio
+        self._repo_candidato = repo_candidato
 
     # ==========================================
     # CRUD
     # ==========================================
 
-    def cadastrar(self, id_vaga: int, id_candidato: int, status: str = "Enviado"):
-        """Cadastra uma nova candidatura. Valida duplicidade (candidato + vaga)."""
+    def cadastrar(
+        self,
+        id_vaga: int,
+        tipo_vaga: TipoVagaCandidatura,
+        id_candidato: int,
+        status: str = "Enviado"
+    ):
+        """Cadastra uma nova candidatura. Valida duplicidade e integridade referencial."""
+        # Validação de integridade referencial: candidato deve existir
+        if self._repo_candidato:
+            candidato = self._repo_candidato.buscar_por_id(id_candidato)
+            if not candidato:
+                raise ValueError(f"Candidato com ID {id_candidato} não encontrado.")
+        
+        # Validação de integridade referencial: vaga deve existir no repositório correto
+        if tipo_vaga == TipoVagaCandidatura.CLT and self._repo_vaga_clt:
+            vaga = self._repo_vaga_clt.buscar_por_id(id_vaga)
+            if not vaga:
+                raise ValueError(f"Vaga CLT com ID {id_vaga} não encontrada.")
+            if not vaga.ativa:
+                raise ValueError("Não é possível se candidatar a uma vaga inativa.")
+        elif tipo_vaga == TipoVagaCandidatura.ESTAGIO and self._repo_vaga_estagio:
+            vaga = self._repo_vaga_estagio.buscar_por_id(id_vaga)
+            if not vaga:
+                raise ValueError(f"Vaga de Estágio com ID {id_vaga} não encontrada.")
+            if not vaga.ativa:
+                raise ValueError("Não é possível se candidatar a uma vaga inativa.")
+        
+        # Verifica duplicidade considerando tipo_vaga
         existentes = self.repo.listar_por_candidato(id_candidato)
-        if any(c.id_vaga == id_vaga for c in existentes):
+        if any(c.id_vaga == id_vaga and c.tipo_vaga == tipo_vaga for c in existentes):
             raise ValueError("Candidato já possui candidatura para esta vaga")
 
         todas = self.repo.listar_todas()
@@ -25,6 +64,7 @@ class CandidaturaService:
         candidatura = Candidatura(
             id=novo_id,
             id_vaga=id_vaga,
+            tipo_vaga=tipo_vaga,
             id_candidato=id_candidato,
             status=StatusCandidatura(status),
         )

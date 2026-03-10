@@ -1,13 +1,20 @@
+from typing import Optional
 from src.dominio.vaga import VagaCLT, Modalidade, TipoVaga
 from src.interfaces.interface_vaga import IVagaRepositorio
+from src.interfaces.interface_empresa import IEmpresa
 
 
 class VagaCLTService:
     """Serviço de domínio para gerenciamento de vagas CLT.
     Contém a lógica de negócio e validações relacionadas às vagas CLT."""
 
-    def __init__(self, repositorio: IVagaRepositorio):
+    def __init__(
+        self,
+        repositorio: IVagaRepositorio,
+        repo_empresa: Optional[IEmpresa] = None
+    ):
         self.repo = repositorio
+        self._repo_empresa = repo_empresa
 
     # ==========================================
     # CRUD
@@ -15,6 +22,7 @@ class VagaCLTService:
 
     def cadastrar(
         self,
+        id_empresa: int,
         titulo: str,
         descricao: str,
         area: str,
@@ -24,12 +32,19 @@ class VagaCLTService:
         localidade: str = "",
         prazo_inscricao=None,
     ):
-        """Cadastra uma nova vaga CLT. Gera ID automático."""
+        """Cadastra uma nova vaga CLT. Valida existência da empresa."""
+        # Validação de integridade referencial: empresa deve existir
+        if self._repo_empresa:
+            empresa = self._repo_empresa.buscar_por_id(id_empresa)
+            if not empresa:
+                raise ValueError(f"Empresa com ID {id_empresa} não encontrada.")
+        
         todas = self.repo.listar_todas()
         novo_id = 1 if not todas else max(v.id for v in todas) + 1
 
         vaga = VagaCLT(
             id=novo_id,
+            id_empresa=id_empresa,
             titulo=titulo,
             descricao=descricao,
             area=area,
@@ -42,6 +57,10 @@ class VagaCLTService:
 
         self.repo.salvar(vaga)
         return vaga
+
+    def listar_por_empresa(self, id_empresa: int):
+        """Retorna todas as vagas CLT de uma empresa específica."""
+        return [v for v in self.repo.listar_todas() if v.id_empresa == id_empresa]
 
     def listar_todas(self):
         """Lista todas as vagas CLT."""

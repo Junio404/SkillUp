@@ -1,4 +1,4 @@
-from src.dominio.curso_competencia import CursoCompetencia
+from src.dominio.curso_competencia import CursoCompetencia, TipoCursoCompetencia
 from src.interfaces.interface_curso_competencia import ICursoCompetenciaRepositorio
 
 
@@ -13,7 +13,7 @@ class CursoCompetenciaService:
     # CRUD
     # ==========================================
 
-    def cadastrar(self, id_curso: int, id_competencia: int, nivel_conferido: str):
+    def cadastrar(self, id_curso: int, id_competencia: int, nivel_conferido: str, tipo_curso: TipoCursoCompetencia):
         """Cadastra uma nova competência para um curso. Valida duplicidade."""
         existente = self.repo.buscar_por_curso_e_competencia(id_curso, id_competencia)
         if existente:
@@ -27,6 +27,7 @@ class CursoCompetenciaService:
             id_curso=id_curso,
             id_competencia=id_competencia,
             nivel_conferido=nivel_conferido,
+            tipo_curso=tipo_curso,
         )
 
         self.repo.salvar(curso_comp)

@@ -4,7 +4,7 @@ from typing import Optional, List
 from src.dominio.candidato import Candidato
 from src.dominio.curso_abs import Curso
 from src.dominio.curso_presencial import CursoPresencial
-from src.dominio.inscricao_curso import InscricaoCurso, StatusInscricao
+from src.dominio.inscricao_curso import InscricaoCurso, StatusInscricao, TipoCursoInscricao
 from src.dominio.competencia_candidato import CompetenciaCandidato
 from src.interfaces.interface_inscricao_curso import IInscricaoCursoRepositorio
 from src.interfaces.interface_curso import ICursoRepositorio
@@ -21,46 +21,64 @@ class InscricaoCursoService:
     - O candidato deve existir.
     - Se o curso for presencial, a localidade do candidato deve coincidir
     com a localidade do curso.
-    - Não permite inscrição duplicada (mesmo candidato no mesmo curso).
+    - Não permite inscrição duplicada (mesmo candidato no mesmo curso/tipo).
     - Ao concluir um curso, as competências do curso são atribuídas ao candidato.
     """
 
     def __init__(
         self,
         repo_inscricao: IInscricaoCursoRepositorio,
-        repo_curso: ICursoRepositorio,
-        repo_candidato: ICandidatoRepositorio,
+        repo_curso_ead: Optional[ICursoRepositorio] = None,
+        repo_curso_presencial: Optional[ICursoRepositorio] = None,
+        repo_candidato: Optional[ICandidatoRepositorio] = None,
         repo_curso_competencia: Optional[ICursoCompetenciaRepositorio] = None,
         repo_competencia_candidato: Optional[ICompetenciaCandidatoRepositorio] = None,
     ):
         self._repo_inscricao = repo_inscricao
-        self._repo_curso = repo_curso
+        self._repo_curso_ead = repo_curso_ead
+        self._repo_curso_presencial = repo_curso_presencial
         self._repo_candidato = repo_candidato
         self._repo_curso_competencia = repo_curso_competencia
         self._repo_competencia_candidato = repo_competencia_candidato
 
-    def inscrever(self, id_candidato: int, id_curso: int) -> InscricaoCurso:
+    def _buscar_curso(self, id_curso: int, tipo_curso: TipoCursoInscricao) -> Optional[Curso]:
+        """Busca curso no repositório correto baseado no tipo."""
+        if tipo_curso == TipoCursoInscricao.EAD and self._repo_curso_ead:
+            return self._repo_curso_ead.buscar_por_id(id_curso)
+        elif tipo_curso == TipoCursoInscricao.PRESENCIAL and self._repo_curso_presencial:
+            return self._repo_curso_presencial.buscar_por_id(id_curso)
+        return None
+
+    def inscrever(
+        self,
+        id_candidato: int,
+        id_curso: int,
+        tipo_curso: TipoCursoInscricao
+    ) -> InscricaoCurso:
         """Inscreve um candidato em um curso, validando todas as regras de negócio."""
-        # 1. Buscar curso
-        curso = self._repo_curso.buscar_por_id(id_curso)
+        # 1. Buscar curso no repositório correto
+        curso = self._buscar_curso(id_curso, tipo_curso)
         if not curso:
-            raise ValueError("Curso não encontrado.")
+            raise ValueError(f"Curso {tipo_curso.value} com ID {id_curso} não encontrado.")
 
         if not curso.ativo:
             raise ValueError("Curso não está ativo para inscrições.")
 
         # 2. Buscar candidato
-        candidato = self._repo_candidato.buscar_por_id(id_candidato)
-        if not candidato:
-            raise ValueError("Candidato não encontrado.")
+        if self._repo_candidato:
+            candidato = self._repo_candidato.buscar_por_id(id_candidato)
+            if not candidato:
+                raise ValueError(f"Candidato com ID {id_candidato} não encontrado.")
+        else:
+            candidato = None
 
-        # 3. Verificar duplicidade
+        # 3. Verificar duplicidade considerando tipo_curso
         inscricoes_aluno = self._repo_inscricao.listar_por_aluno(id_candidato)
-        if any(i.id_curso == id_curso for i in inscricoes_aluno):
+        if any(i.id_curso == id_curso and i.tipo_curso == tipo_curso for i in inscricoes_aluno):
             raise ValueError("Candidato já está inscrito neste curso.")
 
         # 4. Regra de localidade para cursos presenciais
-        if isinstance(curso, CursoPresencial):
+        if tipo_curso == TipoCursoInscricao.PRESENCIAL and isinstance(curso, CursoPresencial) and candidato:
             self._validar_localidade(candidato, curso)
 
         # 5. Gerar ID e criar inscrição
@@ -70,6 +88,7 @@ class InscricaoCursoService:
         inscricao = InscricaoCurso(
             id=novo_id,
             id_curso=id_curso,
+            tipo_curso=tipo_curso,
             id_aluno=id_candidato,
             data_inscricao=date.today(),
             status=StatusInscricao.DEFERIDO,
@@ -170,6 +189,60 @@ class InscricaoCursoService:
         """Converte um nível de competência para inteiro para comparação."""
         mapa = {"iniciante": 0, "intermediario": 1, "avancado": 2}
         return mapa.get(nivel.lower(), 0)
+
+    def encerrar_curso(self, id_curso: int, tipo_curso: TipoCursoInscricao) -> dict:
+        """Encerra um curso, concluindo todas as inscrições deferidas e atribuindo competências.
+
+        Regras:
+        - Busca todas as inscrições DEFERIDAS do curso.
+        - Conclui cada inscrição, atribuindo competências aos alunos.
+        - Desativa o curso para novas inscrições.
+
+        Args:
+            id_curso: ID do curso a encerrar.
+            tipo_curso: Tipo do curso (EAD ou PRESENCIAL).
+
+        Returns:
+            dict com:
+                - total_inscritos: quantidade de inscrições encontradas
+                - concluidos: quantidade de alunos que concluíram
+                - competencias_atribuidas: total de competências atribuídas
+        """
+        # 1. Buscar curso
+        curso = self._buscar_curso(id_curso, tipo_curso)
+        if not curso:
+            raise ValueError(f"Curso {tipo_curso.value} com ID {id_curso} não encontrado.")
+
+        # 2. Buscar todas inscrições do curso
+        inscricoes = self._repo_inscricao.listar_por_curso(id_curso)
+        inscricoes_deferidas = [i for i in inscricoes if i.status == StatusInscricao.DEFERIDO and i.tipo_curso == tipo_curso]
+
+        total_inscritos = len(inscricoes_deferidas)
+        concluidos = 0
+        competencias_atribuidas = 0
+
+        # 3. Concluir cada inscrição deferida
+        for inscricao in inscricoes_deferidas:
+            try:
+                competencias = self.concluir_inscricao(inscricao.id)
+                concluidos += 1
+                competencias_atribuidas += len(competencias)
+            except Exception:
+                # Se falhar uma inscrição, continua com as outras
+                pass
+
+        # 4. Desativar o curso
+        curso.ativo = False
+        if tipo_curso == TipoCursoInscricao.EAD and self._repo_curso_ead:
+            self._repo_curso_ead.atualizar(curso)
+        elif tipo_curso == TipoCursoInscricao.PRESENCIAL and self._repo_curso_presencial:
+            self._repo_curso_presencial.atualizar(curso)
+
+        return {
+            "total_inscritos": total_inscritos,
+            "concluidos": concluidos,
+            "competencias_atribuidas": competencias_atribuidas
+        }
 
     # ------------------------------------------------------------------
     # Validação de localidade
