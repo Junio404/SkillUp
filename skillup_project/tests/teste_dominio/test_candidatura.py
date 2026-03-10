@@ -1,6 +1,6 @@
 import unittest
 from unittest.mock import patch
-from src.dominio.candidatura import Candidatura, StatusCandidatura, CandidaturaMapper
+from src.dominio.candidatura import Candidatura, StatusCandidatura, CandidaturaMapper, TipoVagaCandidatura
 from src.dominio.validators import PrazoValidador
 
 
@@ -12,7 +12,7 @@ class TestCandidatura(unittest.TestCase):
     """
 
     def _criar(self, **kwargs):
-        defaults = dict(id=1, id_vaga=10, id_candidato=20)
+        defaults = dict(id=1, id_vaga=10, id_candidato=20, tipo_vaga=TipoVagaCandidatura.CLT)
         defaults.update(kwargs)
         with patch.object(PrazoValidador, "validar", return_value=None):
             return Candidatura(**defaults)

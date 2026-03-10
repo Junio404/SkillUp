@@ -19,6 +19,7 @@ class TestServiceCursoEAD(unittest.TestCase):
         self.mock_repo.listar_por_nome.return_value = []
         self.mock_repo.listar_todos.return_value = []
         curso = self.service.cadastrar(
+            id_instituicao=1,
             nome="Python Avançado",
             area="TI",
             carga_horaria=40,
@@ -34,7 +35,7 @@ class TestServiceCursoEAD(unittest.TestCase):
     def test_cadastrar_nome_duplicado(self):
         self.mock_repo.listar_por_nome.return_value = [Mock()]
         with self.assertRaisesRegex(ValueError, "Já existe curso com este nome"):
-            self.service.cadastrar("Python", "TI", 40, 100, "https://x.com")
+            self.service.cadastrar(1, "Python", "TI", 40, 100, "https://x.com")
 
     def test_cadastrar_id_incremental(self):
         existente = Mock()
@@ -42,7 +43,7 @@ class TestServiceCursoEAD(unittest.TestCase):
         self.mock_repo.listar_por_nome.return_value = []
         self.mock_repo.listar_todos.return_value = [existente]
         curso = self.service.cadastrar(
-            "Novo Curso", "TI", 20, 50, "https://x.com", date(2027, 6, 1)
+            1, "Novo Curso", "TI", 20, 50, "https://x.com", date(2027, 6, 1)
         )
         self.assertEqual(curso.id, 4)
 

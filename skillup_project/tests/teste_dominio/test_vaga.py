@@ -8,7 +8,7 @@ class TestVagaCLT(unittest.TestCase):
 
     def _criar_vaga_clt(self, **kwargs):
         defaults = dict(
-            id=1, titulo="Dev Python", descricao="Backend",
+            id=1, id_empresa=1, titulo="Dev Python", descricao="Backend",
             area="TI", modalidade=Modalidade.REMOTO, tipo=TipoVaga.EMPREGO,
             salario_base=8000.0, prazo_inscricao=date(2027, 12, 31),
             localidade="São Paulo",
@@ -69,9 +69,9 @@ class TestVagaEstagio(unittest.TestCase):
 
     def _criar_vaga_estagio(self, **kwargs):
         defaults = dict(
-            id=1, titulo="Estágio Dev", descricao="Python", area="TI",
+            id=1, id_empresa=1, titulo="Estágio Dev", descricao="Python", area="TI",
             modalidade=Modalidade.PRESENCIAL, tipo=TipoVaga.ESTAGIO,
-            bolsa_auxilio=1500.0, instituicao_conveniada="USP",
+            bolsa_auxilio=1500.0, id_instituicao_conveniada=1,
             prazo_inscricao=date(2027, 12, 31), localidade="São Paulo",
         )
         defaults.update(kwargs)
@@ -80,7 +80,7 @@ class TestVagaEstagio(unittest.TestCase):
     def test_criacao_valida(self):
         v = self._criar_vaga_estagio()
         self.assertEqual(v.bolsa_auxilio, 1500.0)
-        self.assertEqual(v.instituicao_conveniada, "USP")
+        self.assertEqual(v.id_instituicao_conveniada, 1)
         self.assertEqual(v.localidade, "São Paulo")
 
     def test_custo_contratacao(self):
@@ -94,7 +94,7 @@ class TestVagaEstagio(unittest.TestCase):
         self.assertEqual(restaurado.id, original.id)
         self.assertEqual(restaurado.bolsa_auxilio, original.bolsa_auxilio)
         self.assertEqual(restaurado.localidade, original.localidade)
-        self.assertEqual(restaurado.instituicao_conveniada, original.instituicao_conveniada)
+        self.assertEqual(restaurado.id_instituicao_conveniada, original.id_instituicao_conveniada)
 
 
 class TestModalidadeEnum(unittest.TestCase):

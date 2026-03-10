@@ -11,7 +11,7 @@ class TestInstituicaoEnsino(unittest.TestCase):
 
     def _criar(self, **kwargs):
         defaults = dict(
-            id=1, razao_social="Escola Tech LTDA", nome_fantasia="Escola Tech",
+            id=1, nome="Escola Tech", razao_social="Escola Tech LTDA", nome_fantasia="Escola Tech",
             _cnpj="12345678000199", registro_educacional="REG123",
             tipo="Universidade", modalidades=["Presencial", "EAD"],
             credenciada=True,

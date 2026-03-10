@@ -8,7 +8,7 @@ import sys
 import os
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "../..")))
 
-from src.aplicacao.fluxo_instituicao_admin import FluxoInstituicaoAdmin
+from src.aplicacao.fluxo_instituicao_ensino_admin import FluxoInstituicaoAdmin
 
 
 class TestFluxoInstituicaoAdminInicializacao:

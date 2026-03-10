@@ -9,7 +9,7 @@ from src.interfaces.interface_curso_competencia import ICursoCompetenciaReposito
 from src.interfaces.interface_competencia_candidato import ICompetenciaCandidatoRepositorio
 from src.dominio.curso_presencial import CursoPresencial
 from src.dominio.curso_ead import CursoEAD
-from src.dominio.inscricao_curso import StatusInscricao
+from src.dominio.inscricao_curso import StatusInscricao, TipoCursoInscricao
 
 
 class TestServiceInscricaoCurso(unittest.TestCase):
@@ -17,12 +17,14 @@ class TestServiceInscricaoCurso(unittest.TestCase):
 
     def setUp(self):
         self.mock_repo_inscricao = Mock(spec=IInscricaoCursoRepositorio)
-        self.mock_repo_curso = Mock(spec=ICursoRepositorio)
+        self.mock_repo_curso_ead = Mock(spec=ICursoRepositorio)
+        self.mock_repo_curso_presencial = Mock(spec=ICursoRepositorio)
         self.mock_repo_candidato = Mock(spec=ICandidatoRepositorio)
         self.service = InscricaoCursoService(
-            self.mock_repo_inscricao,
-            self.mock_repo_curso,
-            self.mock_repo_candidato,
+            repo_inscricao=self.mock_repo_inscricao,
+            repo_curso_ead=self.mock_repo_curso_ead,
+            repo_curso_presencial=self.mock_repo_curso_presencial,
+            repo_candidato=self.mock_repo_candidato,
         )
 
     def _mock_candidato(self, id=1, localidade="São Paulo"):
@@ -49,12 +51,12 @@ class TestServiceInscricaoCurso(unittest.TestCase):
     def test_inscrever_sucesso_presencial(self):
         curso = self._mock_curso_presencial(localidade="São Paulo")
         candidato = self._mock_candidato(localidade="São Paulo")
-        self.mock_repo_curso.buscar_por_id.return_value = curso
+        self.mock_repo_curso_presencial.buscar_por_id.return_value = curso
         self.mock_repo_candidato.buscar_por_id.return_value = candidato
         self.mock_repo_inscricao.listar_por_aluno.return_value = []
         self.mock_repo_inscricao.listar_todas.return_value = []
 
-        inscricao = self.service.inscrever(1, 1)
+        inscricao = self.service.inscrever(1, 1, TipoCursoInscricao.PRESENCIAL)
         self.mock_repo_inscricao.salvar.assert_called_once()
         self.assertEqual(inscricao.id, 1)
         self.assertEqual(inscricao.status, StatusInscricao.DEFERIDO)
@@ -62,63 +64,64 @@ class TestServiceInscricaoCurso(unittest.TestCase):
     def test_inscrever_sucesso_ead(self):
         curso = self._mock_curso_ead()
         candidato = self._mock_candidato(localidade="Qualquer Cidade")
-        self.mock_repo_curso.buscar_por_id.return_value = curso
+        self.mock_repo_curso_ead.buscar_por_id.return_value = curso
         self.mock_repo_candidato.buscar_por_id.return_value = candidato
         self.mock_repo_inscricao.listar_por_aluno.return_value = []
         self.mock_repo_inscricao.listar_todas.return_value = []
 
-        inscricao = self.service.inscrever(1, 1)
+        inscricao = self.service.inscrever(1, 1, TipoCursoInscricao.EAD)
         self.mock_repo_inscricao.salvar.assert_called_once()
 
     def test_inscrever_curso_inexistente(self):
-        self.mock_repo_curso.buscar_por_id.return_value = None
-        with self.assertRaisesRegex(ValueError, "Curso não encontrado"):
-            self.service.inscrever(1, 999)
+        self.mock_repo_curso_ead.buscar_por_id.return_value = None
+        with self.assertRaisesRegex(ValueError, "não encontrado"):
+            self.service.inscrever(1, 999, TipoCursoInscricao.EAD)
 
     def test_inscrever_curso_inativo(self):
         curso = self._mock_curso_presencial(ativo=False)
-        self.mock_repo_curso.buscar_por_id.return_value = curso
+        self.mock_repo_curso_presencial.buscar_por_id.return_value = curso
         with self.assertRaisesRegex(ValueError, "não está ativo"):
-            self.service.inscrever(1, 1)
+            self.service.inscrever(1, 1, TipoCursoInscricao.PRESENCIAL)
 
     def test_inscrever_candidato_inexistente(self):
         curso = self._mock_curso_presencial()
-        self.mock_repo_curso.buscar_por_id.return_value = curso
+        self.mock_repo_curso_presencial.buscar_por_id.return_value = curso
         self.mock_repo_candidato.buscar_por_id.return_value = None
-        with self.assertRaisesRegex(ValueError, "Candidato não encontrado"):
-            self.service.inscrever(999, 1)
+        with self.assertRaisesRegex(ValueError, "não encontrado"):
+            self.service.inscrever(999, 1, TipoCursoInscricao.PRESENCIAL)
 
     def test_inscrever_duplicada(self):
         curso = self._mock_curso_presencial()
         candidato = self._mock_candidato()
         inscricao_existente = Mock()
         inscricao_existente.id_curso = 1
-        self.mock_repo_curso.buscar_por_id.return_value = curso
+        inscricao_existente.tipo_curso = TipoCursoInscricao.PRESENCIAL
+        self.mock_repo_curso_presencial.buscar_por_id.return_value = curso
         self.mock_repo_candidato.buscar_por_id.return_value = candidato
         self.mock_repo_inscricao.listar_por_aluno.return_value = [inscricao_existente]
 
         with self.assertRaisesRegex(ValueError, "já está inscrito"):
-            self.service.inscrever(1, 1)
+            self.service.inscrever(1, 1, TipoCursoInscricao.PRESENCIAL)
 
     def test_inscrever_localidade_incompativel(self):
         curso = self._mock_curso_presencial(localidade="Rio de Janeiro")
         candidato = self._mock_candidato(localidade="São Paulo")
-        self.mock_repo_curso.buscar_por_id.return_value = curso
+        self.mock_repo_curso_presencial.buscar_por_id.return_value = curso
         self.mock_repo_candidato.buscar_por_id.return_value = candidato
         self.mock_repo_inscricao.listar_por_aluno.return_value = []
 
         with self.assertRaisesRegex(ValueError, "Localidade incompatível"):
-            self.service.inscrever(1, 1)
+            self.service.inscrever(1, 1, TipoCursoInscricao.PRESENCIAL)
 
     def test_inscrever_candidato_sem_localidade_curso_presencial(self):
         curso = self._mock_curso_presencial(localidade="São Paulo")
         candidato = self._mock_candidato(localidade="")
-        self.mock_repo_curso.buscar_por_id.return_value = curso
+        self.mock_repo_curso_presencial.buscar_por_id.return_value = curso
         self.mock_repo_candidato.buscar_por_id.return_value = candidato
         self.mock_repo_inscricao.listar_por_aluno.return_value = []
 
         with self.assertRaisesRegex(ValueError, "não possui localidade"):
-            self.service.inscrever(1, 1)
+            self.service.inscrever(1, 1, TipoCursoInscricao.PRESENCIAL)
 
     def test_inscrever_id_incremental(self):
         curso = self._mock_curso_ead()
@@ -126,12 +129,12 @@ class TestServiceInscricaoCurso(unittest.TestCase):
         existente = Mock()
         existente.id = 10
         existente.id_curso = 99
-        self.mock_repo_curso.buscar_por_id.return_value = curso
+        self.mock_repo_curso_ead.buscar_por_id.return_value = curso
         self.mock_repo_candidato.buscar_por_id.return_value = candidato
         self.mock_repo_inscricao.listar_por_aluno.return_value = []
         self.mock_repo_inscricao.listar_todas.return_value = [existente]
 
-        inscricao = self.service.inscrever(1, 1)
+        inscricao = self.service.inscrever(1, 1, TipoCursoInscricao.EAD)
         self.assertEqual(inscricao.id, 11)
 
     # -- LISTAGENS --
@@ -154,17 +157,19 @@ class TestConclusaoInscricao(unittest.TestCase):
 
     def setUp(self):
         self.mock_repo_inscricao = Mock(spec=IInscricaoCursoRepositorio)
-        self.mock_repo_curso = Mock(spec=ICursoRepositorio)
+        self.mock_repo_curso_ead = Mock(spec=ICursoRepositorio)
+        self.mock_repo_curso_presencial = Mock(spec=ICursoRepositorio)
         self.mock_repo_candidato = Mock(spec=ICandidatoRepositorio)
         self.mock_repo_curso_competencia = Mock(spec=ICursoCompetenciaRepositorio)
         self.mock_repo_competencia_candidato = Mock(spec=ICompetenciaCandidatoRepositorio)
 
         self.service = InscricaoCursoService(
-            self.mock_repo_inscricao,
-            self.mock_repo_curso,
-            self.mock_repo_candidato,
-            self.mock_repo_curso_competencia,
-            self.mock_repo_competencia_candidato,
+            repo_inscricao=self.mock_repo_inscricao,
+            repo_curso_ead=self.mock_repo_curso_ead,
+            repo_curso_presencial=self.mock_repo_curso_presencial,
+            repo_candidato=self.mock_repo_candidato,
+            repo_curso_competencia=self.mock_repo_curso_competencia,
+            repo_competencia_candidato=self.mock_repo_competencia_candidato,
         )
 
     def _mock_inscricao(self, id=1, id_curso=1, id_aluno=1, status=StatusInscricao.DEFERIDO):
@@ -301,11 +306,12 @@ class TestConclusaoInscricao(unittest.TestCase):
     def test_concluir_inscricao_sem_repositorios_competencia(self):
         """Conclui inscrição mesmo sem repositórios de competência configurados."""
         service_sem_repos = InscricaoCursoService(
-            self.mock_repo_inscricao,
-            self.mock_repo_curso,
-            self.mock_repo_candidato,
-            None,  # Sem repo_curso_competencia
-            None,  # Sem repo_competencia_candidato
+            repo_inscricao=self.mock_repo_inscricao,
+            repo_curso_ead=self.mock_repo_curso_ead,
+            repo_curso_presencial=self.mock_repo_curso_presencial,
+            repo_candidato=self.mock_repo_candidato,
+            repo_curso_competencia=None,  # Sem repo_curso_competencia
+            repo_competencia_candidato=None,  # Sem repo_competencia_candidato
         )
         inscricao = self._mock_inscricao()
         self.mock_repo_inscricao.buscar_por_id.return_value = inscricao

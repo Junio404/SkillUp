@@ -2,7 +2,7 @@ import unittest
 from unittest.mock import Mock, patch
 from src.services.service_candidatura import CandidaturaService
 from src.interfaces.interface_candidatura import ICandidaturaRepositorio
-from src.dominio.candidatura import StatusCandidatura
+from src.dominio.candidatura import StatusCandidatura, TipoVagaCandidatura
 from src.dominio.validators import PrazoValidador
 
 
@@ -17,7 +17,7 @@ class TestServiceCandidatura(unittest.TestCase):
     def test_cadastrar_sucesso(self, _mock_prazo):
         self.mock_repo.listar_por_candidato.return_value = []
         self.mock_repo.listar_todas.return_value = []
-        c = self.service.cadastrar(id_vaga=10, id_candidato=20)
+        c = self.service.cadastrar(id_vaga=10, id_candidato=20, tipo_vaga=TipoVagaCandidatura.CLT)
         self.mock_repo.salvar.assert_called_once()
         self.assertEqual(c.id_vaga, 10)
         self.assertEqual(c.id_candidato, 20)
@@ -27,9 +27,11 @@ class TestServiceCandidatura(unittest.TestCase):
     def test_cadastrar_duplicado(self, _mock_prazo):
         existente = Mock()
         existente.id_vaga = 10
+        existente.tipo_vaga = TipoVagaCandidatura.CLT
         self.mock_repo.listar_por_candidato.return_value = [existente]
+        self.mock_repo.listar_todas.return_value = []
         with self.assertRaisesRegex(ValueError, "já possui candidatura"):
-            self.service.cadastrar(id_vaga=10, id_candidato=20)
+            self.service.cadastrar(id_vaga=10, id_candidato=20, tipo_vaga=TipoVagaCandidatura.CLT)
 
     def test_buscar_por_id_sucesso(self):
         candidatura = Mock()

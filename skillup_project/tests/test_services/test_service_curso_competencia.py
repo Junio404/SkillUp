@@ -2,6 +2,7 @@ import unittest
 from unittest.mock import Mock
 from src.services.service_curso_competencia import CursoCompetenciaService
 from src.interfaces.interface_curso_competencia import ICursoCompetenciaRepositorio
+from src.dominio.curso_competencia import TipoCursoCompetencia
 
 
 class TestServiceCursoCompetencia(unittest.TestCase):
@@ -16,7 +17,7 @@ class TestServiceCursoCompetencia(unittest.TestCase):
     def test_cadastrar_sucesso(self):
         self.mock_repo.buscar_por_curso_e_competencia.return_value = None
         self.mock_repo.listar_todas.return_value = []
-        cc = self.service.cadastrar(1, 2, "intermediario")
+        cc = self.service.cadastrar(1, 2, "intermediario", TipoCursoCompetencia.EAD)
         self.mock_repo.salvar.assert_called_once()
         self.assertEqual(cc.id, 1)
         self.assertEqual(cc.id_curso, 1)
@@ -25,14 +26,14 @@ class TestServiceCursoCompetencia(unittest.TestCase):
     def test_cadastrar_duplicado(self):
         self.mock_repo.buscar_por_curso_e_competencia.return_value = Mock()
         with self.assertRaisesRegex(ValueError, "já possui esta competência"):
-            self.service.cadastrar(1, 2, "avancado")
+            self.service.cadastrar(1, 2, "avancado", TipoCursoCompetencia.EAD)
 
     def test_cadastrar_id_incremental(self):
         existente = Mock()
         existente.id = 10
         self.mock_repo.buscar_por_curso_e_competencia.return_value = None
         self.mock_repo.listar_todas.return_value = [existente]
-        cc = self.service.cadastrar(1, 3, "iniciante")
+        cc = self.service.cadastrar(1, 3, "iniciante", TipoCursoCompetencia.EAD)
         self.assertEqual(cc.id, 11)
 
     def test_buscar_por_id_sucesso(self):

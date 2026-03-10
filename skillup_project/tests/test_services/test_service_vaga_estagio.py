@@ -18,29 +18,31 @@ class TestServiceVagaEstagio(unittest.TestCase):
     def test_cadastrar_sucesso(self):
         self.mock_repo.listar_todas.return_value = []
         vaga = self.service.cadastrar(
+            id_empresa=1,
             titulo="Estágio TI",
             descricao="Estágio em TI",
             area="TI",
             modalidade=Modalidade.HIBRIDO,
             tipo=TipoVaga.ESTAGIO,
             bolsa_auxilio=1500.0,
-            instituicao_conveniada="UFMG",
+            id_instituicao_conveniada=1,
             localidade="Belo Horizonte",
             prazo_inscricao=date(2027, 12, 31),
         )
         self.mock_repo.salvar.assert_called_once()
         self.assertEqual(vaga.id, 1)
+        self.assertEqual(vaga.id_empresa, 1)
         self.assertEqual(vaga.titulo, "Estágio TI")
         self.assertEqual(vaga.bolsa_auxilio, 1500.0)
-        self.assertEqual(vaga.instituicao_conveniada, "UFMG")
+        self.assertEqual(vaga.id_instituicao_conveniada, 1)
 
     def test_cadastrar_id_incremental(self):
         existente = Mock()
         existente.id = 3
         self.mock_repo.listar_todas.return_value = [existente]
         vaga = self.service.cadastrar(
-            "Estágio Eng", "Desc", "Engenharia", Modalidade.PRESENCIAL,
-            TipoVaga.ESTAGIO, 1200.0, "USP", "São Paulo", date(2027, 6, 1),
+            1, "Estágio Eng", "Desc", "Engenharia", Modalidade.PRESENCIAL,
+            TipoVaga.ESTAGIO, 1200.0, 2, "São Paulo", date(2027, 6, 1),
         )
         self.assertEqual(vaga.id, 4)
 

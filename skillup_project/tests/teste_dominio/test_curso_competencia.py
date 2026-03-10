@@ -1,12 +1,12 @@
 import unittest
-from src.dominio.curso_competencia import CursoCompetencia, CursoCompetenciaMapper
+from src.dominio.curso_competencia import CursoCompetencia, CursoCompetenciaMapper, TipoCursoCompetencia
 
 
 class TestCursoCompetencia(unittest.TestCase):
     """Testes da entidade CursoCompetencia."""
 
     def _criar(self, **kwargs):
-        defaults = dict(id=1, id_curso=10, id_competencia=20, nivel_conferido="intermediario")
+        defaults = dict(id=1, id_curso=10, id_competencia=20, nivel_conferido="intermediario", tipo_curso=TipoCursoCompetencia.EAD)
         defaults.update(kwargs)
         return CursoCompetencia(**defaults)
 

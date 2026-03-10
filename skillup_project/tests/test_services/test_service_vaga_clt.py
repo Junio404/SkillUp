@@ -18,6 +18,7 @@ class TestServiceVagaCLT(unittest.TestCase):
     def test_cadastrar_sucesso(self):
         self.mock_repo.listar_todas.return_value = []
         vaga = self.service.cadastrar(
+            id_empresa=1,
             titulo="Dev Python",
             descricao="Vaga para dev",
             area="TI",
@@ -28,6 +29,7 @@ class TestServiceVagaCLT(unittest.TestCase):
         )
         self.mock_repo.salvar.assert_called_once()
         self.assertEqual(vaga.id, 1)
+        self.assertEqual(vaga.id_empresa, 1)
         self.assertEqual(vaga.titulo, "Dev Python")
         self.assertEqual(vaga.salario_base, 8000.0)
 
@@ -36,7 +38,7 @@ class TestServiceVagaCLT(unittest.TestCase):
         existente.id = 5
         self.mock_repo.listar_todas.return_value = [existente]
         vaga = self.service.cadastrar(
-            "Dev Java", "Vaga", "TI", Modalidade.PRESENCIAL, TipoVaga.EMPREGO,
+            1, "Dev Java", "Vaga", "TI", Modalidade.PRESENCIAL, TipoVaga.EMPREGO,
             10000.0, "São Paulo", date(2027, 12, 31),
         )
         self.assertEqual(vaga.id, 6)

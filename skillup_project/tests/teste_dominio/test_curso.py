@@ -13,6 +13,7 @@ class TestCursoEAD(unittest.TestCase):
             id=1, nome="Python EAD", area="TI", carga_horaria=40,
             modalidade=Modalidade.REMOTO, capacidade=100,
             prazo_inscricao=date(2027, 12, 31), plataforma_url="http://ead.com",
+            id_instituicao=1,
         )
         defaults.update(kwargs)
         return CursoEAD(**defaults)
@@ -62,6 +63,7 @@ class TestCursoPresencial(unittest.TestCase):
             id=1, nome="Python Presencial", area="TI", carga_horaria=40,
             modalidade=Modalidade.PRESENCIAL, capacidade=30,
             prazo_inscricao=date(2027, 12, 31), localidade="São Paulo",
+            id_instituicao=1,
         )
         defaults.update(kwargs)
         return CursoPresencial(**defaults)

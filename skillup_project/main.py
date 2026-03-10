@@ -10,11 +10,43 @@ from typing import Optional
 # Adiciona o diretório skillup_project ao PATH para importações relativas
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
+# Repositórios
+from src.repositorios.repositorio_candidato import RepositorioCandidatoJSON
+from src.repositorios.repositorio_empresa import RepositorioEmpresaJSON
+from src.repositorios.repositorio_instituicao_ensino import RepositorioInstituicaoEnsinoJSON
+from src.repositorios.repositorio_vaga_clt import RepositorioVagaCLTJSON
+from src.repositorios.repositorio_vaga_estagio import RepositorioVagaEstagioJSON
+from src.repositorios.repositorio_candidatura import RepositorioCandidaturaJSON
+from src.repositorios.repositorio_inscricao_curso import RepositorioInscricaoCursoJSON
+from src.repositorios.repositorio_curso_ead import RepositorioCursoEADJSON
+from src.repositorios.repositorio_curso_presencial import RepositorioCursoPresencialJSON
+from src.repositorios.repositorio_competencia import RepositorioCompetenciaJSON
+from src.repositorios.repositorio_competencia_candidato import RepositorioCompetenciaCandidatoJSON
+from src.repositorios.repositorio_requisitos_vaga import RepositorioRequisitoVagaJSON
+from src.repositorios.repositorio_curso_competencia import RepositorioCursoCompetenciaJSON
+from src.repositorios.repositorio_area_ensino import RepositorioAreaEnsinoJSON
+from src.repositorios.repositorio_instituicao_area_ensino import RepositorioInstituicaoAreaEnsinoJSON
+
+# Services
 from src.services.service_candidato import CandidatoService
 from src.services.service_instituicao_ensino import ServiceInstituicaoEnsino
 from src.services.services_empresa import EmpresaService
-from src.repositorios.repositorio_candidato import RepositorioCandidatoJSON
-from src.repositorios.repositorio_empresa import RepositorioEmpresaJSON
+from src.services.service_busca_vaga import MotorBuscaVaga
+from src.services.service_candidatura import CandidaturaService
+from src.services.service_inscricao_curso import InscricaoCursoService
+from src.services.service_curso_ead import CursoEADService
+from src.services.service_curso_presencial import CursoPresencialService
+from src.services.service_competencia import CompetenciaService
+from src.services.service_competencia_candidato import CompetenciaCandidatoService
+from src.services.service_recomendacao import RecomendacaoService
+from src.services.service_vaga_clt import VagaCLTService
+from src.services.service_vaga_estagio import VagaEstagioService
+from src.services.service_requisito_vaga import RequisitoVagaService
+from src.services.service_curso_competencia import CursoCompetenciaService
+from src.services.service_area_ensino import AreaEnsinoService
+from src.services.service_instituicao_area_ensino import InstituicaoAreaEnsinoService
+
+# Fluxos
 from src.aplicacao.fluxo_candidato import FluxoCandidato
 from src.aplicacao.fluxo_empresa import FluxoEmpresa
 from src.aplicacao.fluxo_instituicao import FluxoInstituicao
@@ -30,16 +62,80 @@ class AplicacaoSkillUp:
 
     def _inicializar_servicos(self) -> None:
         """Inicializa todos os serviços e repositórios"""
+        # ==========================================
         # Repositórios
+        # ==========================================
         self.repo_candidato = RepositorioCandidatoJSON()
         self.repo_empresa = RepositorioEmpresaJSON()
+        self.repo_instituicao = RepositorioInstituicaoEnsinoJSON()
+        self.repo_vaga_clt = RepositorioVagaCLTJSON()
+        self.repo_vaga_estagio = RepositorioVagaEstagioJSON()
+        self.repo_candidatura = RepositorioCandidaturaJSON()
+        self.repo_inscricao_curso = RepositorioInscricaoCursoJSON()
+        self.repo_curso_ead = RepositorioCursoEADJSON()
+        self.repo_curso_presencial = RepositorioCursoPresencialJSON()
+        self.repo_competencia = RepositorioCompetenciaJSON()
+        self.repo_competencia_candidato = RepositorioCompetenciaCandidatoJSON()
+        self.repo_requisito_vaga = RepositorioRequisitoVagaJSON()
+        self.repo_curso_competencia = RepositorioCursoCompetenciaJSON()
+        self.repo_area_ensino = RepositorioAreaEnsinoJSON()
+        self.repo_instituicao_area = RepositorioInstituicaoAreaEnsinoJSON()
 
+        # ==========================================
         # Serviços
+        # ==========================================
+        # Candidato
         self.service_candidato = CandidatoService(self.repo_candidato)
+        
+        # Empresa
         self.service_empresa = EmpresaService(self.repo_empresa)
+        
+        # Instituição
         self.service_instituicao = ServiceInstituicaoEnsino(
-            None, None  # TODO: implementar repositórios da instituição
+            self.repo_instituicao, self.repo_curso_ead
         )
+        
+        # Vagas
+        self.service_vaga_clt = VagaCLTService(self.repo_vaga_clt, self.repo_empresa)
+        self.service_vaga_estagio = VagaEstagioService(self.repo_vaga_estagio, self.repo_empresa)
+        self.motor_busca_vagas = MotorBuscaVaga(self.repo_vaga_clt)  # Busca em vagas CLT
+        
+        # Candidatura
+        self.service_candidatura = CandidaturaService(
+            self.repo_candidatura,
+            self.repo_vaga_clt,
+            self.repo_vaga_estagio,
+            self.repo_candidato
+        )
+        
+        # Cursos
+        self.service_curso_ead = CursoEADService(self.repo_curso_ead, self.repo_instituicao)
+        self.service_curso_presencial = CursoPresencialService(self.repo_curso_presencial, self.repo_instituicao)
+        self.service_curso_competencia = CursoCompetenciaService(self.repo_curso_competencia)
+        
+        # Inscrição em cursos
+        self.service_inscricao_curso = InscricaoCursoService(
+            self.repo_inscricao_curso,
+            self.repo_curso_ead,
+            self.repo_curso_presencial,
+            self.repo_candidato,
+            self.repo_curso_competencia,
+            self.repo_competencia_candidato
+        )
+        
+        # Competências
+        self.service_competencia = CompetenciaService(self.repo_competencia)
+        self.service_competencia_candidato = CompetenciaCandidatoService(self.repo_competencia_candidato)
+        
+        # Requisitos de vaga
+        self.service_requisito_vaga = RequisitoVagaService(self.repo_requisito_vaga)
+        
+        # Recomendação
+        self.service_recomendacao = RecomendacaoService(self.repo_vaga_clt, self.repo_curso_ead)
+        
+        # Áreas de ensino
+        self.service_area_ensino = AreaEnsinoService(self.repo_area_ensino)
+        self.service_instituicao_area = InstituicaoAreaEnsinoService(self.repo_instituicao_area)
 
     def _limpar_tela(self) -> None:
         """Limpa a tela do console"""
@@ -65,7 +161,17 @@ class AplicacaoSkillUp:
     def _executar_fluxo_candidato(self) -> None:
         """Executa o fluxo de candidato"""
         try:
-            fluxo = FluxoCandidato(self.service_candidato)
+            fluxo = FluxoCandidato(
+                service_candidato=self.service_candidato,
+                motor_busca_vagas=self.motor_busca_vagas,
+                service_candidatura=self.service_candidatura,
+                service_inscricao_curso=self.service_inscricao_curso,
+                service_curso_ead=self.service_curso_ead,
+                service_curso_presencial=self.service_curso_presencial,
+                service_competencia_candidato=self.service_competencia_candidato,
+                service_competencia=self.service_competencia,
+                service_recomendacao=self.service_recomendacao,
+            )
             fluxo.executar()
         except Exception as e:
             self._limpar_tela()
@@ -75,7 +181,14 @@ class AplicacaoSkillUp:
     def _executar_fluxo_empresa(self) -> None:
         """Executa o fluxo de empresa"""
         try:
-            fluxo = FluxoEmpresa(self.service_empresa)
+            fluxo = FluxoEmpresa(
+                service_empresa=self.service_empresa,
+                service_vaga_clt=self.service_vaga_clt,
+                service_vaga_estagio=self.service_vaga_estagio,
+                service_requisito_vaga=self.service_requisito_vaga,
+                service_candidatura=self.service_candidatura,
+                service_competencia=self.service_competencia,
+            )
             fluxo.executar()
         except Exception as e:
             self._limpar_tela()
@@ -85,7 +198,16 @@ class AplicacaoSkillUp:
     def _executar_fluxo_instituicao(self) -> None:
         """Executa o fluxo de instituição de ensino"""
         try:
-            fluxo = FluxoInstituicao(self.service_instituicao)
+            fluxo = FluxoInstituicao(
+                service_instituicao=self.service_instituicao,
+                service_curso_ead=self.service_curso_ead,
+                service_curso_presencial=self.service_curso_presencial,
+                service_curso_competencia=self.service_curso_competencia,
+                service_inscricao_curso=self.service_inscricao_curso,
+                service_competencia=self.service_competencia,
+                service_area_ensino=self.service_area_ensino,
+                service_instituicao_area=self.service_instituicao_area,
+            )
             fluxo.executar()
         except Exception as e:
             self._limpar_tela()

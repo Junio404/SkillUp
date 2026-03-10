@@ -1,5 +1,5 @@
 import unittest
-from src.dominio.requisitos_vaga import RequisitoVaga, RequisitoVagaMapper
+from src.dominio.requisitos_vaga import RequisitoVaga, RequisitoVagaMapper, TipoVagaRequisito
 
 
 class TestRequisitoVaga(unittest.TestCase):
@@ -9,6 +9,7 @@ class TestRequisitoVaga(unittest.TestCase):
         defaults = dict(
             id=1, id_vaga=10, id_competencia=20,
             nivel_minimo="INTERMEDIARIO", obrigatorio=True,
+            tipo_vaga=TipoVagaRequisito.CLT,
         )
         defaults.update(kwargs)
         return RequisitoVaga(**defaults)

@@ -2,6 +2,7 @@ import unittest
 from unittest.mock import Mock
 from src.services.service_requisito_vaga import RequisitoVagaService
 from src.interfaces.interface_requisito_vaga import IRequisitoVagaRepositorio
+from src.dominio.requisitos_vaga import TipoVagaRequisito
 
 
 class TestServiceRequisitoVaga(unittest.TestCase):
@@ -16,7 +17,7 @@ class TestServiceRequisitoVaga(unittest.TestCase):
     def test_cadastrar_sucesso(self):
         self.mock_repo.buscar_por_vaga_e_competencia.return_value = None
         self.mock_repo.listar_todos.return_value = []
-        req = self.service.cadastrar(1, 2, "intermediario", True)
+        req = self.service.cadastrar(1, 2, "intermediario", TipoVagaRequisito.CLT, True)
         self.mock_repo.salvar.assert_called_once()
         self.assertEqual(req.id, 1)
         self.assertEqual(req.id_vaga, 1)
@@ -26,14 +27,14 @@ class TestServiceRequisitoVaga(unittest.TestCase):
     def test_cadastrar_duplicado(self):
         self.mock_repo.buscar_por_vaga_e_competencia.return_value = Mock()
         with self.assertRaisesRegex(ValueError, "já possui este requisito"):
-            self.service.cadastrar(1, 2, "avancado")
+            self.service.cadastrar(1, 2, "avancado", TipoVagaRequisito.CLT)
 
     def test_cadastrar_id_incremental(self):
         existente = Mock()
         existente.id = 9
         self.mock_repo.buscar_por_vaga_e_competencia.return_value = None
         self.mock_repo.listar_todos.return_value = [existente]
-        req = self.service.cadastrar(1, 3, "iniciante", False)
+        req = self.service.cadastrar(1, 3, "iniciante", TipoVagaRequisito.CLT, False)
         self.assertEqual(req.id, 10)
 
     def test_buscar_por_id_sucesso(self):

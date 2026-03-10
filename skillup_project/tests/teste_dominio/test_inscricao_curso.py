@@ -1,13 +1,13 @@
 import unittest
 from datetime import date
-from src.dominio.inscricao_curso import InscricaoCurso, StatusInscricao, InscricaoCursoMapper
+from src.dominio.inscricao_curso import InscricaoCurso, StatusInscricao, InscricaoCursoMapper, TipoCursoInscricao
 
 
 class TestInscricaoCurso(unittest.TestCase):
     """Testes da entidade InscricaoCurso."""
 
     def _criar(self, **kwargs):
-        defaults = dict(id=1, id_curso=10, id_aluno=20, data_inscricao=date.today())
+        defaults = dict(id=1, id_curso=10, id_aluno=20, data_inscricao=date.today(), tipo_curso=TipoCursoInscricao.EAD)
         defaults.update(kwargs)
         return InscricaoCurso(**defaults)
 
@@ -45,8 +45,9 @@ class TestStatusInscricao(unittest.TestCase):
     """Testes do enum StatusInscricao."""
 
     def test_valores(self):
-        self.assertEqual(StatusInscricao.DEFERIDO.value, 0)
-        self.assertEqual(StatusInscricao.INDEFERIDO.value, 1)
+        self.assertEqual(StatusInscricao.DEFERIDO.value, "Deferido")
+        self.assertEqual(StatusInscricao.INDEFERIDO.value, "Indeferido")
+        self.assertEqual(StatusInscricao.CONCLUIDO.value, "Concluído")
 
 
 if __name__ == "__main__":
