@@ -24,6 +24,10 @@ class InstituicaoEnsino(EntidadePublicadora):
     tipo: str = ""
     modalidades: List[str] = field(default_factory=list)
     credenciada: bool = True
+    email: str = ""
+    telefone: str = ""
+    endereco: str = ""
+    website: str = ""
 
     id_validador: Validador = field(default_factory=IdValidador, repr=False)
     texto_validador: Validador = field(default_factory=StrValidador, repr=False)
@@ -74,6 +78,10 @@ class InstituicaoEnsinoMapper:
             "tipo": instituicao.tipo,
             "modalidades": instituicao.modalidades,
             "credenciada": instituicao.credenciada,
+            "email": instituicao.email,
+            "telefone": instituicao.telefone,
+            "endereco": instituicao.endereco,
+            "website": instituicao.website,
         }
 
     @staticmethod
@@ -88,6 +96,10 @@ class InstituicaoEnsinoMapper:
             tipo=d["tipo"],
             modalidades=d.get("modalidades", []),
             credenciada=d.get("credenciada", True),
+            email=d.get("email", ""),
+            telefone=d.get("telefone", ""),
+            endereco=d.get("endereco", ""),
+            website=d.get("website", ""),
         )
 
 

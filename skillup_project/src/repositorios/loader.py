@@ -11,7 +11,7 @@ class JsonRepository:
             return []
 
         try:
-            with open(self._caminho_arquivo, "r", encoding="utf-8") as f:
+            with open(self._caminho_arquivo, "r", encoding="utf-8-sig") as f:
                 return json.load(f)
         except json.JSONDecodeError:
             return []

@@ -51,6 +51,7 @@ class CursoPresencialMapper:
         from .vaga import Modalidade
         return CursoPresencial(
             id=d["id"],
+            id_instituicao=d["id_instituicao"],
             nome=d["nome"],
             area=d["area"],
             carga_horaria=d["carga_horaria"],

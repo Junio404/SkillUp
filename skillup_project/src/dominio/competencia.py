@@ -51,14 +51,9 @@ class CompetenciaNivelada(Competencia):
                 raise TypeError("Nível deve ser do tipo Nivel enum.")
 
 
-class CompetenciaCandidato(CompetenciaNivelada):
-    """Competência possuída por um candidato."""
-    pass
-
-
-class CursoCompetencia(CompetenciaNivelada):
-    """Competência exigida por um curso ou vaga."""
-    pass
+# NOTA: CompetenciaCandidato e CursoCompetencia foram movidas para arquivos dedicados
+# (competencia_candidato.py e curso_competencia.py) pois são entidades de ligação
+# com chaves estrangeiras próprias, não simples subclasses de CompetenciaNivelada.
 
 
 # ==============================

@@ -16,6 +16,7 @@ from .validators import IdValidador, StrValidador, CargaHorariaValidador, Capaci
 @dataclass
 class Curso(ABC):
     id: int
+    id_instituicao: int  # FK para InstituicaoEnsino - materializa vínculo Instituicao -> Curso
     nome: str
     area: str
     carga_horaria: int
@@ -35,6 +36,7 @@ class Curso(ABC):
 
     def __post_init__(self):
         self.id_validador.validar(self.id)
+        self.id_validador.validar(self.id_instituicao)  # Valida FK instituição
         self.texto_validador.validar(self.nome)
         self.texto_validador.validar(self.area)
         self.carga_validador.validar(self.carga_horaria)
@@ -93,6 +95,7 @@ class Curso(ABC):
         """Serializa o objeto para dicionário (base para subclasses)."""
         return {
             "id": self.id,
+            "id_instituicao": self.id_instituicao,
             "nome": self.nome,
             "area": self.area,
             "carga_horaria": self.carga_horaria,
