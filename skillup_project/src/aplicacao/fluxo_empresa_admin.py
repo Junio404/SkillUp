@@ -391,14 +391,16 @@ class FluxoEmpresaAdmin:
             modalidade_str = input("Modalidade: ").strip().upper()
             modalidade = Modalidade(modalidade_str)
 
-            print("\nTipos: CLT, ESTAGIO, FREELANCER")
-            tipo_str = input("Tipo (CLT): ").strip().upper() or "CLT"
+            print("\nTipos: EMPREGO, ESTAGIO, TRAINEE")
+            tipo_str = input("Tipo (Emprego): ").strip() or "Emprego"
             tipo = TipoVaga(tipo_str)
 
             salario = float(input("Salário base: R$ ").strip())
             localidade = input("Localidade: ").strip()
+            id_empresa = int(input("ID da Empresa: ").strip())
 
             vaga = self.service_vaga_clt.cadastrar(
+                id_empresa=id_empresa,
                 titulo=titulo,
                 descricao=descricao,
                 area=area,
@@ -543,17 +545,20 @@ class FluxoEmpresaAdmin:
             modalidade = Modalidade(modalidade_str)
 
             bolsa = float(input("Bolsa auxílio: R$ ").strip())
-            instituicao = input("Instituição conveniada: ").strip()
+            id_instituicao_str = input("ID da Instituição conveniada (ou vazio): ").strip()
+            id_instituicao_conveniada = int(id_instituicao_str) if id_instituicao_str else None
             localidade = input("Localidade: ").strip()
+            id_empresa = int(input("ID da Empresa: ").strip())
 
             vaga = self.service_vaga_estagio.cadastrar(
+                id_empresa=id_empresa,
                 titulo=titulo,
                 descricao=descricao,
                 area=area,
                 modalidade=modalidade,
                 tipo=TipoVaga.ESTAGIO,
                 bolsa_auxilio=bolsa,
-                instituicao_conveniada=instituicao,
+                id_instituicao_conveniada=id_instituicao_conveniada,
                 localidade=localidade,
             )
 
@@ -672,7 +677,7 @@ class FluxoEmpresaAdmin:
         if self.service_competencia:
             try:
                 print("Competências disponíveis:")
-                competencias = self.service_competencia.listar_todas()
+                competencias = self.service_competencia.listar_todos()
                 for c in competencias[:10]:
                     print(f"  ID: {c.id} | {c.nome}")
                 print()
@@ -685,10 +690,12 @@ class FluxoEmpresaAdmin:
             nivel = input("Nível mínimo (iniciante/intermediario/avancado/especialista): ").strip()
             obrigatorio = input("Obrigatório? (s/n): ").strip().lower() == "s"
 
+            from src.dominio.requisitos_vaga import TipoVagaRequisito
             requisito = self.service_requisito_vaga.cadastrar(
                 id_vaga=id_vaga,
                 id_competencia=id_competencia,
                 nivel_minimo=nivel,
+                tipo_vaga=TipoVagaRequisito.CLT,
                 obrigatorio=obrigatorio,
             )
 

@@ -590,7 +590,7 @@ class FluxoEmpresa:
                 print("2. Médio")
                 print("3. Grande")
                 porte_op = input("Escolha (1-3): ").strip()
-                portes = {"1": "pequeno", "2": "medio", "3": "grande"}
+                portes = {"1": "Pequeno", "2": "Médio", "3": "Grande"}
                 novo_porte = portes.get(porte_op)
                 if novo_porte:
                     self.service.atualizar(self.empresa_logada.id, "porte", novo_porte)

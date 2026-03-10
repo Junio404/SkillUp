@@ -554,6 +554,7 @@ class FluxoInstituicaoAdmin:
             url = input("URL da plataforma: ").strip()
 
             curso = self.service_curso_ead.cadastrar(
+                id_instituicao=self.instituicao_selecionada.id,
                 nome=nome,
                 area=area,
                 carga_horaria=carga,
@@ -741,6 +742,7 @@ class FluxoInstituicaoAdmin:
             localidade = input("Localidade: ").strip()
 
             curso = self.service_curso_presencial.cadastrar(
+                id_instituicao=self.instituicao_selecionada.id,
                 nome=nome,
                 area=area,
                 carga_horaria=carga,
@@ -932,7 +934,7 @@ class FluxoInstituicaoAdmin:
         if self.service_competencia:
             try:
                 print("Competências disponíveis:")
-                competencias = self.service_competencia.listar_todas()
+                competencias = self.service_competencia.listar_todos()
                 for c in competencias[:15]:
                     print(f"  ID: {c.id} | {c.nome}")
                 print()
