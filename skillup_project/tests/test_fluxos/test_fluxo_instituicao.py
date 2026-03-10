@@ -8,7 +8,7 @@ import os
 
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "../..")))
 
-from src.aplicacao.fluxo_instituicao import FluxoInstituicao
+from skillup_project.src.aplicacao.fluxo_instituicao_ensino import FluxoInstituicao
 
 class TestFluxoInstituicaoInicializacao:
     """Testes de inicialização"""
