@@ -101,7 +101,7 @@ class FluxoCandidatoAdmin:
         print("\n=== TODOS OS CANDIDATOS ===\n")
 
         try:
-            candidatos = self.service.listar_todos()
+            candidatos = self.service.listar()
             if not candidatos:
                 print("Nenhum candidato cadastrado.")
             else:
@@ -440,8 +440,11 @@ class FluxoCandidatoAdmin:
         print("\n=== CRIAR CANDIDATURA ===\n")
 
         try:
+            from src.dominio.candidatura import TipoVagaCandidatura
             id_vaga = int(input("Digite o ID da vaga: ").strip())
-            self.service_candidatura.cadastrar(id_vaga, self.candidato_selecionado.id)
+            tipo_str = input("Tipo de vaga (1=CLT, 2=Estágio): ").strip()
+            tipo_vaga = TipoVagaCandidatura.ESTAGIO if tipo_str == "2" else TipoVagaCandidatura.CLT
+            self.service_candidatura.cadastrar(id_vaga, tipo_vaga, self.candidato_selecionado.id)
             print("\n✅ Candidatura criada com sucesso!")
 
         except ValueError as e:
@@ -553,7 +556,11 @@ class FluxoCandidatoAdmin:
         self._limpar_tela()
         print("\n=== CRIAR INSCRIÇÃO EM CURSO ===\n")
 
+        from src.dominio.inscricao_curso import TipoCursoInscricao
+        
         # Mostrar cursos disponíveis
+        cursos_ead = []
+        cursos_pres = []
         try:
             print("Cursos EAD disponíveis:")
             cursos_ead = self.service_curso_ead.listar_todos()
@@ -571,7 +578,17 @@ class FluxoCandidatoAdmin:
         try:
             print()
             id_curso = int(input("Digite o ID do curso: ").strip())
-            self.service_inscricao_curso.inscrever(self.candidato_selecionado.id, id_curso)
+            
+            # Determina o tipo do curso pelo ID
+            tipo_curso = None
+            if any(c.id == id_curso for c in cursos_ead):
+                tipo_curso = TipoCursoInscricao.EAD
+            elif any(c.id == id_curso for c in cursos_pres):
+                tipo_curso = TipoCursoInscricao.PRESENCIAL
+            else:
+                raise ValueError("Curso não encontrado.")
+            
+            self.service_inscricao_curso.inscrever(self.candidato_selecionado.id, id_curso, tipo_curso)
             print("\n✅ Inscrição criada com sucesso!")
 
         except ValueError as e:
@@ -754,7 +771,7 @@ class FluxoCandidatoAdmin:
         if self.service_competencia:
             try:
                 print("Competências disponíveis:")
-                todas = self.service_competencia.listar_todas()
+                todas = self.service_competencia.listar_todos()
                 for c in todas[:10]:
                     print(f"  ID: {c.id} | {c.nome}")
                 print()
